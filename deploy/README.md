@@ -44,8 +44,12 @@ Current token: `~/.cursor-local-remote/auth-token.json` (field `token`).
 ## Security
 
 - Rotate token every 90 days (launchd job).
-- Add **Cloudflare Access** (Google/GitHub login) on `clr.rawshn.com` in Zero Trust dashboard — recommended before heavy use.
+- **Cloudflare Access:** `scripts/deploy/install-cloudflare-access.sh` (requires API token in `~/.cursor-local-remote/cloudflare-api-token`)
 - Never port-forward `:3100` on your router.
+
+## Full API & deployment reference
+
+See **[deploy/API.md](./API.md)** for endpoints, auth layers, launchd labels, setup commands, and troubleshooting.
 
 ## Mac sleep
 

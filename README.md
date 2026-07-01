@@ -186,7 +186,7 @@ npm run dev
 
 CLR runs on **your Mac** — it cannot be hosted on Vercel or other serverless platforms. For access from anywhere, use **Cloudflare Tunnel** on a subdomain you control.
 
-See **[deploy/README.md](./deploy/README.md)** for setup (`clr.rawshn.com`, 90-day token rotation, launchd).
+See **[deploy/README.md](./deploy/README.md)** for setup and **[deploy/API.md](./deploy/API.md)** for full API reference, auth layers, and troubleshooting.
 
 ## License
 
