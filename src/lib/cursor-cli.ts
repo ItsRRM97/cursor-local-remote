@@ -31,12 +31,23 @@ async function shouldTrust(): Promise<boolean> {
   return val !== "0";
 }
 
+
+async function resolveAgentModel(explicit?: string): Promise<string | undefined> {
+  if (explicit) return explicit;
+  const fromEnv = process.env.CURSOR_DEFAULT_MODEL?.trim();
+  if (fromEnv) return fromEnv;
+  const fromConfig = await getConfig("default_model");
+  if (fromConfig) return fromConfig;
+  return undefined;
+}
+
 export async function spawnAgent(options: AgentOptions): Promise<ChildProcess> {
   ensureAgentOnPath();
   const args = ["-p", options.prompt, "--output-format", "stream-json", "--stream-partial-output"];
 
   if (await shouldTrust()) {
     args.push("--trust");
+    args.push("--approve-mcps");
   }
   if (options.sessionId) {
     args.push("--resume", options.sessionId);
@@ -44,8 +55,9 @@ export async function spawnAgent(options: AgentOptions): Promise<ChildProcess> {
   if (options.workspace) {
     args.push("--workspace", options.workspace);
   }
-  if (options.model) {
-    args.push("--model", options.model);
+  const model = await resolveAgentModel(options.model);
+  if (model) {
+    args.push("--model", model);
   }
   if (options.mode && options.mode !== "agent") {
     args.push("--mode", options.mode);
