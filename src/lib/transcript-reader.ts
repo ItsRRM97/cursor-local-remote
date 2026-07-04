@@ -3,6 +3,7 @@ import { join, resolve, sep } from "path";
 import { homedir } from "os";
 import { existsSync, statSync } from "fs";
 import type { StoredSession, ChatMessage, ToolCallInfo, TodoItem, ProjectInfo } from "@/lib/types";
+import { joinMessageContent } from "@/lib/markdown-normalize";
 import { vlog } from "@/lib/verbose";
 
 const CURSOR_PROJECTS_DIR = join(homedir(), ".cursor", "projects");
@@ -303,6 +304,79 @@ function extractToolCallsFromContent(
   return calls;
 }
 
+function extractStreamToolCalls(
+  events: Record<string, unknown>[],
+  sessionId: string,
+  counter: { n: number },
+  baseTimestamp: number,
+): ToolCallInfo[] {
+  const byCallId = new Map<string, ToolCallInfo>();
+
+  for (const event of events) {
+    if (event.type !== "tool_call") continue;
+    const subtype = event.subtype as string;
+    const callId = event.call_id as string | undefined;
+    const toolCall = event.tool_call as Record<string, unknown> | undefined;
+    if (!callId || !toolCall) continue;
+
+    const mcp = toolCall.mcpToolCall as Record<string, unknown> | undefined;
+    if (!mcp) continue;
+
+    const args = mcp.args as Record<string, unknown> | undefined;
+    const toolName = String(args?.toolName || args?.name || "MCP");
+    const query =
+      args?.args && typeof args.args === "object" && args.args !== null
+        ? JSON.stringify(args.args)
+        : undefined;
+
+    if (subtype === "started") {
+      byCallId.set(callId, {
+        id: `${sessionId}-tc-${counter.n++}`,
+        callId,
+        type: "other",
+        name: toolName,
+        command: query,
+        status: "running",
+        timestamp: baseTimestamp + counter.n,
+      });
+      continue;
+    }
+
+    if (subtype !== "completed") continue;
+
+    const result = mcp.result as Record<string, unknown> | undefined;
+    let status: ToolCallInfo["status"] = "completed";
+    let resultText: string | undefined;
+
+    if (result?.rejected) {
+      status = "error";
+      const rejected = result.rejected as Record<string, string>;
+      resultText = rejected.reason || "MCP call rejected";
+    } else if (result?.success) {
+      resultText = "OK";
+    }
+
+    const existing = byCallId.get(callId);
+    if (existing) {
+      existing.status = status;
+      existing.result = resultText;
+    } else {
+      byCallId.set(callId, {
+        id: `${sessionId}-tc-${counter.n++}`,
+        callId,
+        type: "other",
+        name: toolName,
+        command: query,
+        status,
+        result: resultText,
+        timestamp: baseTimestamp + counter.n,
+      });
+    }
+  }
+
+  return Array.from(byCallId.values());
+}
+
 export function parseLiveEvents(
   events: Record<string, unknown>[],
   sessionId: string,
@@ -334,7 +408,7 @@ export function parseLiveEvents(
     if (text.trim()) {
       const prev = messages[messages.length - 1];
       if (prev && prev.role === role) {
-        prev.content += text;
+        prev.content = joinMessageContent(prev.content, text);
       } else {
         messages.push({
           id: `${sessionId}-live-${counter.n++}`,
@@ -349,6 +423,8 @@ export function parseLiveEvents(
       toolCalls.push(...extractToolCallsFromContent(contentArr, sessionId, counter, baseTimestamp));
     }
   }
+
+  toolCalls.push(...extractStreamToolCalls(events, sessionId, counter, baseTimestamp));
 
   return { messages, toolCalls };
 }
@@ -406,7 +482,7 @@ export async function readSessionMessages(workspace: string, sessionId: string):
     if (text.trim()) {
       const prev = messages[messages.length - 1];
       if (prev && prev.role === role) {
-        prev.content += text;
+        prev.content = joinMessageContent(prev.content, text);
       } else {
         messages.push({
           id: `${sessionId}-${counter.n++}`,
