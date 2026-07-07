@@ -186,46 +186,89 @@ export function MessageList({
   const scrollRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
-  const isScrollingRef = useRef(false);
+  const pinnedToBottomRef = useRef(true);
 
-  const scrollToBottom = useCallback(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = useCallback((smooth = true) => {
+    const el = scrollRef.current;
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+    } else {
+      endRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
+    }
+    pinnedToBottomRef.current = true;
     setAutoScroll(true);
   }, []);
 
-  const handleScroll = useCallback(() => {
-    if (isScrollingRef.current) return;
+  const updatePinnedFromScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const atBottom = distanceFromBottom < 80;
+    pinnedToBottomRef.current = atBottom;
     setAutoScroll(atBottom);
   }, []);
 
-  const lastMsg = messages[messages.length - 1];
-  const userJustSent = isStreaming && lastMsg?.role === "user";
-  const scrollThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingScrollRef = useRef(false);
+  const handleScroll = useCallback(() => {
+    updatePinnedFromScroll();
+  }, [updatePinnedFromScroll]);
+
+  // Immediately release pin when the user scrolls up (wheel / touch).
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY < 0) {
+        pinnedToBottomRef.current = false;
+        setAutoScroll(false);
+      }
+    };
+
+    let touchStartY = 0;
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0]?.clientY ?? 0;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const y = e.touches[0]?.clientY ?? touchStartY;
+      if (y - touchStartY > 8) {
+        pinnedToBottomRef.current = false;
+        setAutoScroll(false);
+      }
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: true });
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: true });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [messages.length, toolCalls.length]);
+
+  const scrollRafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!autoScroll && !userJustSent) return;
+    if (!pinnedToBottomRef.current) return;
 
-    if (scrollThrottleRef.current) {
-      pendingScrollRef.current = true;
-      return;
+    if (scrollRafRef.current !== null) {
+      cancelAnimationFrame(scrollRafRef.current);
     }
 
-    isScrollingRef.current = true;
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      const el = scrollRef.current;
+      if (!el || !pinnedToBottomRef.current) return;
+      el.scrollTop = el.scrollHeight;
+    });
 
-    scrollThrottleRef.current = setTimeout(() => {
-      scrollThrottleRef.current = null;
-      isScrollingRef.current = false;
-      if (pendingScrollRef.current) {
-        pendingScrollRef.current = false;
-        endRef.current?.scrollIntoView({ behavior: "smooth" });
+    return () => {
+      if (scrollRafRef.current !== null) {
+        cancelAnimationFrame(scrollRafRef.current);
+        scrollRafRef.current = null;
       }
-    }, 200);
-  }, [messages, toolCalls, autoScroll, userJustSent]);
+    };
+  }, [messages, toolCalls]);
 
   const sorted: TimelineItem[] = [
     ...messages.map((m): TimelineItem => ({ kind: "message", timestamp: m.timestamp, message: m })),
@@ -390,7 +433,7 @@ export function MessageList({
 
       {!autoScroll && timeline.length > 0 && (
         <button
-          onClick={scrollToBottom}
+          onClick={() => scrollToBottom(true)}
           aria-label="Scroll to bottom"
           className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bg-elevated border border-border text-text-muted hover:text-text-secondary text-[11px] shadow-lg transition-colors"
         >
