@@ -1,7 +1,6 @@
 import { getConfig, getSessionTitle } from "@/lib/session-store";
 import { readSessionMessages } from "@/lib/transcript-reader";
-import { getNetworkInfo } from "@/lib/network";
-import { DEFAULT_PORT } from "@/lib/constants";
+import { getPublicBaseUrl } from "@/lib/public-url";
 import type { TodoItem } from "@/lib/types";
 
 export async function getWebhookUrl(): Promise<string> {
@@ -24,6 +23,14 @@ function isDiscord(url: string): boolean {
 
 function isSlack(url: string): boolean {
   return url.includes("hooks.slack.com");
+}
+
+function isNtfy(url: string): boolean {
+  return /(^https?:\/\/)?([\w.-]+\.)?ntfy\.sh/i.test(url);
+}
+
+function isPushover(url: string): boolean {
+  return url.includes("api.pushover.net");
 }
 
 function todoStatusIcon(status: string): string {
@@ -55,25 +62,42 @@ function formatForSlack(payload: WebhookPayload): Record<string, unknown> {
   return { text: `*${payload.title}*\n${payload.message}${link}` };
 }
 
+function formatForPushover(payload: WebhookPayload): Record<string, unknown> {
+  const message = payload.url ? `${payload.message}\n${payload.url}` : payload.message;
+  return { title: payload.title, message, priority: 0 };
+}
+
 export async function sendWebhook(
   url: string,
   payload: WebhookPayload,
 ): Promise<void> {
   if (!url) return;
 
-  let body: Record<string, unknown>;
+  let body: string | Record<string, unknown>;
+  let headers: Record<string, string> = { "Content-Type": "application/json" };
+
   if (isDiscord(url)) {
     body = formatForDiscord(payload);
   } else if (isSlack(url)) {
     body = formatForSlack(payload);
+  } else if (isPushover(url)) {
+    body = formatForPushover(payload);
+  } else if (isNtfy(url)) {
+    const text = payload.url ? `${payload.message}\n${payload.url}` : payload.message;
+    body = text;
+    headers = {
+      Title: payload.title,
+      Priority: "default",
+      Tags: payload.event === "test" ? "bell" : "white_check_mark",
+    };
   } else {
     body = { ...payload };
   }
 
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    headers,
+    body: typeof body === "string" ? body : JSON.stringify(body),
   });
 
   if (!res.ok) {
@@ -83,10 +107,7 @@ export async function sendWebhook(
 
 function buildSessionUrl(sessionId: string, workspace?: string): string | undefined {
   try {
-    const port = parseInt(process.env.PORT || String(DEFAULT_PORT), 10);
-    const info = getNetworkInfo(port);
-    const token = process.env.AUTH_TOKEN;
-    const base = token ? `${info.url}?token=${token}` : info.url;
+    const base = getPublicBaseUrl();
     const hash = workspace
       ? `#session=${sessionId}&workspace=${encodeURIComponent(workspace)}`
       : `#session=${sessionId}`;

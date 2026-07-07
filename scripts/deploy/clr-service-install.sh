@@ -5,8 +5,13 @@ set -euo pipefail
 LABEL="com.rawshn.cursor-local-remote"
 PLIST_PATH="${HOME}/Library/LaunchAgents/${LABEL}.plist"
 LOG_DIR="${HOME}/.cursor-local-remote/logs"
+CLR_REPO="${CLR_REPO:-${HOME}/Projects/cursor-local-remote}"
+CLR_START_SRC="${CLR_REPO}/scripts/deploy/clr-start.sh"
 CLR_START="${HOME}/bin/clr-start.sh"
-WORKSPACE="${CLR_WORKSPACE:-${HOME}}"
+CLR_NODE="${HOME}/Applications/CLR.app/Contents/MacOS/clr-server"
+INSTALL_CLR_APP="${CLR_REPO}/scripts/deploy/install-clr-app.sh"
+INSTALL_CLR_NODE="${CLR_REPO}/scripts/deploy/install-clr-node.sh"
+WORKSPACE="${CLR_WORKSPACE:-${CLR_REPO:-${HOME}/Projects/cursor-local-remote}}"
 AUTH_TOKEN_FILE="${CLR_AUTH_FILE:-${HOME}/.cursor-local-remote/auth-token.json}"
 READ_TOKEN="${HOME}/Projects/cursor-local-remote/scripts/deploy/read-auth-token.sh"
 UID_NUM="$(id -u)"
@@ -69,6 +74,16 @@ write_plist() {
     <string>${token}</string>
     <key>CURSOR_DEFAULT_MODEL</key>
     <string>auto</string>
+    <key>PUBLIC_URL</key>
+    <string>${PUBLIC_URL:-https://clr.rawshn.com}</string>
+    <key>CF_ACCESS_TEAM_DOMAIN</key>
+    <string>${CF_ACCESS_TEAM_DOMAIN:-billowing-limit-310f.cloudflareaccess.com}</string>
+    <key>CF_ACCESS_AUD</key>
+    <string>${CF_ACCESS_AUD:-8f53549ef7fd28e492bba7feaee7e9e7effee8deb2ed326a54b0d493c9d0f115}</string>
+    <key>AUTH_TRUST_CLOUDFLARE_ACCESS</key>
+    <string>${AUTH_TRUST_CLOUDFLARE_ACCESS:-1}</string>
+    <key>CLR_NODE</key>
+    <string>${CLR_NODE}</string>
   </dict>
 </dict>
 </plist>
@@ -89,7 +104,16 @@ kill_stale() {
 }
 
 cmd_install() {
-  [[ -x "${CLR_START}" ]] || { echo "ERROR: missing ${CLR_START}" >&2; exit 1; }
+  [[ -x "${CLR_START_SRC}" ]] || { echo "ERROR: missing ${CLR_START_SRC}" >&2; exit 1; }
+  mkdir -p "${HOME}/bin"
+  cp "${CLR_START_SRC}" "${CLR_START}"
+  chmod +x "${CLR_START}"
+  echo "Installed ${CLR_START}"
+  if [[ -x "${INSTALL_CLR_APP}" ]]; then
+    "${INSTALL_CLR_APP}"
+  elif [[ -x "${INSTALL_CLR_NODE}" ]]; then
+    "${INSTALL_CLR_NODE}"
+  fi
   kill_stale
   write_plist
   launchctl bootout "${DOMAIN}" "${PLIST_PATH}" 2>/dev/null || true

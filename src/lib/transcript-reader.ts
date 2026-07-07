@@ -172,6 +172,16 @@ function stripXmlTags(text: string): string {
     .trim();
 }
 
+/** Cursor transcripts redact internal reasoning as literal `[REDACTED]` text blocks. */
+export function sanitizeAssistantText(text: string): string {
+  return text
+    .replace(/\n*\[REDACTED\]\n*/g, "\n")
+    .replace(/^\[REDACTED\]\s*/g, "")
+    .replace(/\s*\[REDACTED\]$/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export interface SessionHistoryResult {
   messages: ChatMessage[];
   toolCalls: ToolCallInfo[];
@@ -230,6 +240,7 @@ const TOOL_NAME_MAP: Record<string, ToolCallInfo["type"]> = {
   Glob: "search",
   List: "read",
   TodoWrite: "todo",
+  Task: "other",
 };
 
 function extractToolCallsFromContent(
@@ -403,12 +414,14 @@ export function parseLiveEvents(
     let text = textParts.join("");
     if (role === "user") {
       text = stripXmlTags(text);
+    } else {
+      text = sanitizeAssistantText(text);
     }
 
     if (text.trim()) {
       const prev = messages[messages.length - 1];
       if (prev && prev.role === role) {
-        prev.content = joinMessageContent(prev.content, text);
+        prev.content = sanitizeAssistantText(joinMessageContent(prev.content, text));
       } else {
         messages.push({
           id: `${sessionId}-live-${counter.n++}`,
@@ -477,12 +490,14 @@ export async function readSessionMessages(workspace: string, sessionId: string):
     let text = textParts.join("");
     if (role === "user") {
       text = stripXmlTags(text);
+    } else {
+      text = sanitizeAssistantText(text);
     }
 
     if (text.trim()) {
       const prev = messages[messages.length - 1];
       if (prev && prev.role === role) {
-        prev.content = joinMessageContent(prev.content, text);
+        prev.content = sanitizeAssistantText(joinMessageContent(prev.content, text));
       } else {
         messages.push({
           id: `${sessionId}-${counter.n++}`,

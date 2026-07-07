@@ -47,7 +47,11 @@ async function fetchActiveSessions(): Promise<string[]> {
 
 export { fetchActiveSessions };
 
-export function useChat(initialModel = "auto", initialWorkspace?: string): UseChatReturn {
+export function useChat(
+  initialModel = "auto",
+  initialWorkspace?: string,
+  activeWorkspace?: string,
+): UseChatReturn {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -66,6 +70,9 @@ export function useChat(initialModel = "auto", initialWorkspace?: string): UseCh
   useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
   useEffect(() => { isStreamingRef.current = isStreaming; }, [isStreaming]);
   useEffect(() => { if (!sessionId) workspaceRef.current = initialWorkspace; }, [initialWorkspace, sessionId]);
+  useEffect(() => {
+    if (activeWorkspace && !sessionId) workspaceRef.current = activeWorkspace;
+  }, [activeWorkspace, sessionId]);
 
   const handleStreamEnd = useCallback(() => {
     setIsStreaming(false);

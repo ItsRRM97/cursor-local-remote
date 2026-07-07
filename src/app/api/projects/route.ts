@@ -2,6 +2,7 @@ import { sep } from "path";
 import { listProjects } from "@/lib/transcript-reader";
 import { listWorkspaces } from "@/lib/session-store";
 import { getWorkspace } from "@/lib/workspace";
+import { resolveAgentWorkspace } from "@/lib/mcp-workspace";
 import { serverError } from "@/lib/errors";
 import type { ProjectInfo } from "@/lib/types";
 
@@ -14,6 +15,7 @@ export async function GET() {
       listWorkspaces(),
     ]);
     const currentWorkspace = getWorkspace();
+    const mcpWorkspace = await resolveAgentWorkspace(currentWorkspace);
 
     const byPath = new Map<string, ProjectInfo>();
     for (const p of transcriptProjects) {
@@ -30,7 +32,11 @@ export async function GET() {
     }
 
     const projects = Array.from(byPath.values()).sort((a, b) => a.name.localeCompare(b.name));
-    return Response.json({ projects, currentWorkspace });
+    return Response.json({
+      projects,
+      currentWorkspace,
+      mcpWorkspace: mcpWorkspace !== currentWorkspace ? mcpWorkspace : null,
+    });
   } catch {
     return serverError("Failed to list projects");
   }

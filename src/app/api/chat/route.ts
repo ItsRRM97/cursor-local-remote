@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
+import { resolve } from "node:path";
 import { spawnAgent } from "@/lib/cursor-cli";
 import { getWorkspace } from "@/lib/workspace";
+import { resolveAgentWorkspace } from "@/lib/mcp-workspace";
 import { upsertSession } from "@/lib/session-store";
 import { registerProcess, promoteToSessionId, pushLiveEvent, setProcessExitHook } from "@/lib/process-registry";
 import { chatRequestSchema, parseBody } from "@/lib/validation";
@@ -49,7 +51,10 @@ function waitForSessionId(
             resolve(event.session_id);
           }
 
-          if (resolvedSessionId && (event.type === "user" || event.type === "assistant")) {
+          if (
+            resolvedSessionId &&
+            (event.type === "user" || event.type === "assistant" || event.type === "tool_call")
+          ) {
             pushLiveEvent(resolvedSessionId, event);
           }
         } catch {
@@ -82,10 +87,15 @@ export async function POST(req: Request) {
   if ("error" in parsed) return badRequest(parsed.error);
   const body = parsed.data;
 
-  const workspace = body.workspace || getWorkspace();
+  const requested = body.workspace || getWorkspace();
+  const workspace = await resolveAgentWorkspace(requested);
 
   try {
     const requestId = randomUUID();
+
+    if (workspace !== resolve(requested) && process.env.CLR_VERBOSE === "1") {
+      console.warn(`[chat] MCP workspace fallback: ${requested} -> ${workspace}`);
+    }
 
     const child = await spawnAgent({
       prompt: body.prompt,

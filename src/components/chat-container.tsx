@@ -40,6 +40,9 @@ export function ChatContainer({
   onOpenSettings,
   onOpenQr,
 }: ChatContainerProps) {
+  const [workspace, setWorkspace] = useState<string>(initialWorkspace || "");
+  const [mcpFallback, setMcpFallback] = useState(false);
+
   const {
     messages,
     toolCalls,
@@ -61,12 +64,11 @@ export function ChatContainer({
     forceSendQueued,
     editQueued,
     deleteQueued,
-  } = useChat(defaultModel, initialWorkspace);
+  } = useChat(defaultModel, initialWorkspace, workspace || undefined);
 
   const haptics = useHaptics();
   const sound = useSound();
   const notification = useNotification();
-  const [workspace, setWorkspace] = useState<string>("");
   const [recentSessions, setRecentSessions] = useState<StoredSession[]>([]);
   const [elapsed, setElapsed] = useState(0);
   const [exportCopied, setExportCopied] = useState(false);
@@ -95,7 +97,11 @@ export function ChatContainer({
     }
     apiFetch("/api/info")
       .then((r) => r.json())
-      .then((data) => setWorkspace(data.workspace || ""))
+      .then((data) => {
+        const ws = data.mcpWorkspace || data.workspace || "";
+        setWorkspace(ws);
+        setMcpFallback(Boolean(data.mcpWorkspace));
+      })
       .catch((err) => console.error("[workspace] Failed to fetch:", err));
   }, [initialWorkspace]);
 
@@ -322,6 +328,12 @@ export function ChatContainer({
           </button>
         </div>
       </header>
+
+      {mcpFallback && (
+        <div className="shrink-0 px-4 py-2 border-b border-warning/20 text-warning text-[11px] bg-warning/5">
+          Agent runs from <span className="font-mono">{workspace.split("/").pop()}</span> for MCP (Notion, Composio). Pick a project in the sidebar to change workspace.
+        </div>
+      )}
 
       {error && (
         <div className="shrink-0 px-4 py-2 border-b border-error/20 text-error text-[12px] bg-error/5">

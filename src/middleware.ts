@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { verifyCloudflareAccessJwt } from "@/lib/cloudflare-access";
 
 const COOKIE_NAME = "cr_session";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -129,7 +130,17 @@ function unauthorizedHtml(wrongToken = false): string {
 </html>`;
 }
 
-export function middleware(req: NextRequest) {
+function setSessionCookie(res: NextResponse, token: string): void {
+  res.cookies.set(COOKIE_NAME, token, {
+    httpOnly: true,
+    sameSite: "strict",
+    path: "/",
+    maxAge: COOKIE_MAX_AGE,
+    secure: process.env.NODE_ENV === "production",
+  });
+}
+
+export async function middleware(req: NextRequest) {
   const token = process.env.AUTH_TOKEN?.toLowerCase();
   if (!token) {
     return NextResponse.next();
@@ -142,12 +153,7 @@ export function middleware(req: NextRequest) {
     if (queryToken.toLowerCase() === token) {
       url.searchParams.delete("token");
       const res = NextResponse.redirect(url);
-      res.cookies.set(COOKIE_NAME, token, {
-        httpOnly: true,
-        sameSite: "strict",
-        path: "/",
-        maxAge: COOKIE_MAX_AGE,
-      });
+      setSessionCookie(res, token);
       return res;
     }
 
@@ -163,6 +169,16 @@ export function middleware(req: NextRequest) {
   const auth = req.headers.get("authorization");
   if (auth?.toLowerCase() === `bearer ${token}`) return NextResponse.next();
 
+  const cfJwt = req.headers.get("cf-access-jwt-assertion");
+  if (cfJwt) {
+    const payload = await verifyCloudflareAccessJwt(cfJwt);
+    if (payload) {
+      const res = NextResponse.next();
+      setSessionCookie(res, token);
+      return res;
+    }
+  }
+
   if (req.nextUrl.pathname.startsWith("/api/")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -174,5 +190,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|icon.png|apple-icon.png|sw.js).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|icon.png|apple-icon.png|apple-touch-icon.png|icon-192.png|icon-512.png|sw.js).*)"],
 };

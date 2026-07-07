@@ -25,7 +25,7 @@ const DEFAULTS: Settings = {
 const TOGGLE_LABELS: Record<"trust" | "sound" | "pwa_prompt", { label: string; description: string }> = {
   trust: {
     label: "Workspace trust",
-    description: "Allow the agent to execute code and edit files without asking",
+    description: "Auto-approve shell, file edits, and MCP tools (required for Notion etc. over CLR)",
   },
   sound: {
     label: "Sound effects",
@@ -33,7 +33,7 @@ const TOGGLE_LABELS: Record<"trust" | "sound" | "pwa_prompt", { label: string; d
   },
   pwa_prompt: {
     label: "Suggest PWA install",
-    description: "Show the install-as-app prompt on page load",
+    description: "Show install prompt on Android Chrome (requires service worker)",
   },
 };
 
@@ -273,7 +273,9 @@ export function SettingsPanel({ open, onClose, onDefaultModelChange }: SettingsP
                     {webhookTestStatus === "sending" && "Sending..."}
                   </button>
                   <p className="text-[10px] text-text-muted/60 leading-tight px-0.5">
-                    Paste a Slack, Discord, or custom webhook URL to receive push notifications when the agent completes
+                    Phone push: <strong>ntfy</strong> (https://ntfy.sh/your-topic — install app, subscribe to topic),
+                    Slack/Discord webhooks, or Pushover (https://api.pushover.net/1/messages.json with token+user in JSON body).
+                    Sends when an agent finishes — use Send test to verify.
                   </p>
                 </div>
               </div>

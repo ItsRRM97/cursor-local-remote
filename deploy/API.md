@@ -50,24 +50,64 @@ Token rotates every **90 days** (launchd: `com.rawshn.clr-token-rotation`).
 
 ## Auth layers
 
-### 1. Cloudflare Access (recommended, internet only)
+### 1. Cloudflare Access (internet)
 
-- **Status:** configure via `scripts/deploy/install-cloudflare-access.sh`
-- **Purpose:** Google/GitHub/email OTP login before traffic reaches CLR
-- **Policy:** allow `mishra.roshanraj@gmail.com` only
-- **Dashboard:** [Zero Trust → Access → Applications](https://one.dash.cloudflare.com/?to=/:account/access/applications)
+- **Status:** active on `clr.rawshn.com`
+- **Purpose:** identity login before traffic reaches CLR
+- **Policy:** `mishra.roshanraj@gmail.com`, `mishraroshanraj@gmail.com`
+- **Login:** Cloudflare account or Email one-time PIN
+- **Dashboard:** [Zero Trust → Access → Applications](https://one.dash.cloudflare.com/a032322f2e5401950110e8845849dd4b/access/applications)
 
 When Access is active, visiting `https://clr.rawshn.com` redirects to Cloudflare login first.
 
-### 2. CLR app token (always required)
+**CLR token bypass (public URL):** when these env vars are set on the CLR launch agent, a valid `Cf-Access-Jwt-Assertion` header auto-sets the `cr_session` cookie — no `?token=` needed:
+
+| Env | Example |
+|-----|---------|
+| `AUTH_TRUST_CLOUDFLARE_ACCESS` | `1` |
+| `CF_ACCESS_TEAM_DOMAIN` | `billowing-limit-310f.cloudflareaccess.com` |
+| `CF_ACCESS_AUD` | Access app AUD (from Zero Trust app settings) |
+
+LAN access (`http://<lan-ip>:3100`) still requires the CLR token (no Cf-Access headers).
+
+### 2. CLR app token (LAN / API / fallback)
 
 | Method | Usage |
 |--------|--------|
 | Query param | `?token=<token>` — sets `cr_session` httpOnly cookie (7 days) |
 | Cookie | `cr_session` after first visit with token |
 | Header | `Authorization: Bearer <token>` for API calls |
+| Cloudflare Access JWT | auto-session on public URL when trust env is configured |
 
-Without a valid CLR token: **401 Unauthorized**.
+---
+
+## Phone notifications (webhook)
+
+Settings → **Webhook notifications**. CLR POSTs when an agent finishes.
+
+| Service | URL / setup |
+|---------|-------------|
+| **ntfy** (recommended) | `https://ntfy.sh/your-secret-topic` — install [ntfy app](https://ntfy.sh), subscribe to same topic |
+| **Slack** | Incoming webhook URL |
+| **Discord** | Channel webhook URL |
+| **Pushover** | `https://api.pushover.net/1/messages.json` (token + user in JSON) |
+| **Custom** | Any JSON POST endpoint |
+
+Use **Send test** in Settings to verify. Webhook links use `PUBLIC_URL` when set.
+
+---
+
+## PWA install (Android Chrome)
+
+Requirements: HTTPS, valid manifest, registered service worker (`/sw.js`).
+
+1. Sign in via Cloudflare Access at `https://clr.rawshn.com`
+2. Enable **Suggest PWA install** in Settings
+3. Chrome should show install banner / menu → **Install app**
+
+If no prompt: Chrome ⋮ → **Install app** or **Add to Home screen**. Clear site data only via Settings → Clear cache (re-registers SW on reload).
+
+**iOS:** no `beforeinstallprompt` — use Share → Add to Home Screen.
 
 ---
 
@@ -211,6 +251,10 @@ chmod 600 ~/.cursor-local-remote/cloudflare-api-token
 | Variable | Value |
 |----------|--------|
 | `AUTH_TOKEN` | From `auth-token.json` (via `clr-service-install.sh`) |
+| `PUBLIC_URL` | `https://clr.rawshn.com` |
+| `AUTH_TRUST_CLOUDFLARE_ACCESS` | `1` — skip CLR token when Access JWT validates |
+| `CF_ACCESS_TEAM_DOMAIN` | `billowing-limit-310f.cloudflareaccess.com` |
+| `CF_ACCESS_AUD` | Access app AUD from Zero Trust |
 | `CURSOR_DEFAULT_MODEL` | `auto` |
 | Workspace | `/Users/rawshn` (plist `ProgramArguments`) |
 
@@ -235,6 +279,9 @@ chmod 600 ~/.cursor-local-remote/cloudflare-api-token
 | Cloudflare login loop | Complete Access policy for your email |
 | Tunnel down | `launchctl kickstart -k gui/$(id -u)/com.rawshn.clr-cloudflared` |
 | Agent stops mid-task | Mac slept — disable system sleep on AC |
+| macOS file access popup | Grant access to **CLR Server** (`~/.cursor-local-remote/bin/clr-server`), not generic node |
+| MCP tools fail silently over CLR | Enable **Workspace trust** in Settings (`--force` for headless MCP). Default workspace must have an MCP catalog: `~/Projects` works; bare `~` does not. CLR auto-falls back to `~/Projects` when the selected workspace has no MCP tools. |
+| Agent uses Grep/Read instead of notion-search | Workspace lacks MCP OAuth. Use **cursor-local-remote** project (has Notion token) or run `agent mcp login notion` once in that project folder on the Mac. CLR auto-picks the best authenticated workspace. |
 | Composio Cloudflare MCP fails | Reconnect with API Token permissions |
 | Old token (`wagon-kiosk`) | Use current token from `auth-token.json` |
 

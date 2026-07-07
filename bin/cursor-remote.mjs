@@ -13,6 +13,26 @@ import qrcode from "qrcode-terminal";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
 
+function resolveClrNode() {
+  const fromEnv = process.env.CLR_NODE?.trim();
+  if (fromEnv && existsSync(fromEnv)) return fromEnv;
+  const appNode = join(homedir(), "Applications", "CLR.app", "Contents", "MacOS", "clr-server");
+  if (existsSync(appNode)) return appNode;
+  const linked = join(homedir(), ".cursor-local-remote", "bin", "clr-server");
+  if (existsSync(linked)) return linked;
+  return process.execPath;
+}
+
+function resolveNextEntrypoint() {
+  const direct = resolve(projectRoot, "node_modules", "next", "dist", "bin", "next");
+  if (existsSync(direct)) return direct;
+  return resolve(projectRoot, "node_modules", ".bin", "next");
+}
+
+function resolveClrPreload() {
+  return resolve(projectRoot, "scripts", "clr-preload.cjs");
+}
+
 const WORDS = [
   "alpha","amber","anvil","apple","arrow","atlas","azure","badge","baker","beach",
   "berry","blade","blaze","bloom","board","bonus","brave","brick","brook","brush",
@@ -339,16 +359,21 @@ function openBrowser() {
   }
 }
 
-const nextBin = resolve(projectRoot, "node_modules", ".bin", "next");
+const nextEntry = resolveNextEntrypoint();
+const clrPreload = resolveClrPreload();
 const isBuilt = existsSync(resolve(projectRoot, ".next", "BUILD_ID"));
 
-const nextArgs = isBuilt
+const nextSubcommand = isBuilt
   ? ["start", "--hostname", hostname, "--port", port]
   : ["dev", "--hostname", hostname, "--port", port];
 
-const child = spawn(nextBin, nextArgs, {
+const nextArgs = existsSync(clrPreload)
+  ? ["--require", clrPreload, nextEntry, ...nextSubcommand]
+  : [nextEntry, ...nextSubcommand];
+
+const child = spawn(resolveClrNode(), nextArgs, {
   cwd: projectRoot,
-  shell: true,
+  shell: false,
   stdio: ["inherit", "pipe", "pipe"],
   env: {
     ...process.env,
@@ -357,6 +382,7 @@ const child = spawn(nextBin, nextArgs, {
     PORT: port,
     AUTH_TOKEN: authToken,
     CLR_VERBOSE: verbose ? "1" : "",
+    CLR_NODE: resolveClrNode(),
   },
 });
 

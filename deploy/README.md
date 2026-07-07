@@ -54,3 +54,24 @@ See **[deploy/API.md](./API.md)** for endpoints, auth layers, launchd labels, se
 ## Mac sleep
 
 CLR stops when the Mac **sleeps**. Display off + system awake is fine. Use AC power and disable system sleep for long remote jobs.
+
+## macOS file access (Privacy)
+
+CLR reads Cursor session files on disk. Use the **CLR Server** app bundle (not generic node):
+
+```bash
+~/Projects/cursor-local-remote/scripts/deploy/install-clr-app.sh
+~/bin/clr-service-install.sh restart
+```
+
+Creates **`~/Applications/CLR.app`** (bundle ID `com.rawshn.clr`, shows as **CLR Server**).
+
+**Full Disk Access:**
+
+1. **System Settings → Privacy & Security → Full Disk Access**
+2. Click **+** and select **`~/Applications/CLR.app`**
+3. Enable the toggle for **CLR Server**
+
+Or drag `CLR.app` from Finder into the list.
+
+`clr-service-install.sh install` runs the app install step automatically.

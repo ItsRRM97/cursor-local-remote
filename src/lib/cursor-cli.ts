@@ -31,6 +31,13 @@ async function shouldTrust(): Promise<boolean> {
   return val !== "0";
 }
 
+/** Headless agent still prompts per MCP tool call unless --force is set. */
+function shouldForce(): boolean {
+  if (process.env.CURSOR_FORCE === "0") return false;
+  if (process.env.CURSOR_FORCE === "1") return true;
+  return true;
+}
+
 
 async function resolveAgentModel(explicit?: string): Promise<string | undefined> {
   if (explicit) return explicit;
@@ -48,6 +55,9 @@ export async function spawnAgent(options: AgentOptions): Promise<ChildProcess> {
   if (await shouldTrust()) {
     args.push("--trust");
     args.push("--approve-mcps");
+    if (shouldForce()) {
+      args.push("--force");
+    }
   }
   if (options.sessionId) {
     args.push("--resume", options.sessionId);

@@ -204,13 +204,16 @@ export function SessionSidebar({
       .then((r) => r.json())
       .then((data) => {
         setProjects(data.projects || []);
-        if (!selectedProject && data.currentWorkspace) {
-          setSelectedProject(data.currentWorkspace);
-          localStorage.setItem(PROJECT_STORAGE_KEY, data.currentWorkspace);
+        if (selectedProject) return;
+        const preferred = data.mcpWorkspace || data.currentWorkspace;
+        if (preferred) {
+          setSelectedProject(preferred);
+          localStorage.setItem(PROJECT_STORAGE_KEY, preferred);
+          onWorkspaceChange?.(preferred);
         }
       })
       .catch(() => {});
-  }, [selectedProject]);
+  }, [selectedProject, onWorkspaceChange]);
 
   const fetchSessions = useCallback(() => {
     setFetchError(null);
