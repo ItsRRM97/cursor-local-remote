@@ -49,3 +49,15 @@ body {
 .safe-bottom {
   padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
+
+.chat-scroll {
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Touch devices: show actions without hover */
+@media (hover: none) {
+  .touch-visible {
+    opacity: 1 !important;
+  }
+}

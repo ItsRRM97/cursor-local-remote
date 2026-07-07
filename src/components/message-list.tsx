@@ -187,69 +187,72 @@ export function MessageList({
   const endRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
   const pinnedToBottomRef = useRef(true);
+  /** Once the user scrolls up, stay unpinned until they return to the bottom or tap the pill. */
+  const userScrolledAwayRef = useRef(false);
+  const lastScrollTopRef = useRef(0);
+  const userInteractingRef = useRef(false);
+  const interactTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const releasePin = useCallback(() => {
+    userScrolledAwayRef.current = true;
+    pinnedToBottomRef.current = false;
+    setAutoScroll(false);
+  }, []);
 
   const scrollToBottom = useCallback((smooth = true) => {
     const el = scrollRef.current;
     if (el) {
       el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+      lastScrollTopRef.current = el.scrollHeight;
     } else {
       endRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
     }
+    userScrolledAwayRef.current = false;
     pinnedToBottomRef.current = true;
     setAutoScroll(true);
   }, []);
 
-  const updatePinnedFromScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    const atBottom = distanceFromBottom < 80;
-    pinnedToBottomRef.current = atBottom;
-    setAutoScroll(atBottom);
+  const markUserInteracting = useCallback(() => {
+    userInteractingRef.current = true;
+    if (interactTimerRef.current) clearTimeout(interactTimerRef.current);
+    interactTimerRef.current = setTimeout(() => {
+      userInteractingRef.current = false;
+      interactTimerRef.current = null;
+    }, 500);
   }, []);
 
   const handleScroll = useCallback(() => {
-    updatePinnedFromScroll();
-  }, [updatePinnedFromScroll]);
-
-  // Immediately release pin when the user scrolls up (wheel / touch).
-  useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
 
-    const onWheel = (e: WheelEvent) => {
-      if (e.deltaY < 0) {
-        pinnedToBottomRef.current = false;
-        setAutoScroll(false);
-      }
-    };
+    const top = el.scrollTop;
+    const distanceFromBottom = el.scrollHeight - top - el.clientHeight;
 
-    let touchStartY = 0;
-    const onTouchStart = (e: TouchEvent) => {
-      touchStartY = e.touches[0]?.clientY ?? 0;
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      const y = e.touches[0]?.clientY ?? touchStartY;
-      if (y - touchStartY > 8) {
-        pinnedToBottomRef.current = false;
-        setAutoScroll(false);
+    if (top < lastScrollTopRef.current - 2) {
+      releasePin();
+    } else if (userScrolledAwayRef.current) {
+      if (distanceFromBottom < 24) {
+        userScrolledAwayRef.current = false;
+        pinnedToBottomRef.current = true;
+        setAutoScroll(true);
       }
-    };
+    } else if (distanceFromBottom < 80) {
+      pinnedToBottomRef.current = true;
+      setAutoScroll(true);
+    } else {
+      pinnedToBottomRef.current = false;
+      setAutoScroll(false);
+    }
 
-    el.addEventListener("wheel", onWheel, { passive: true });
-    el.addEventListener("touchstart", onTouchStart, { passive: true });
-    el.addEventListener("touchmove", onTouchMove, { passive: true });
-    return () => {
-      el.removeEventListener("wheel", onWheel);
-      el.removeEventListener("touchstart", onTouchStart);
-      el.removeEventListener("touchmove", onTouchMove);
-    };
-  }, [messages.length, toolCalls.length]);
+    lastScrollTopRef.current = top;
+  }, [releasePin]);
 
   const scrollRafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!pinnedToBottomRef.current) return;
+    if (userScrolledAwayRef.current || !pinnedToBottomRef.current || userInteractingRef.current) {
+      return;
+    }
 
     if (scrollRafRef.current !== null) {
       cancelAnimationFrame(scrollRafRef.current);
@@ -258,8 +261,14 @@ export function MessageList({
     scrollRafRef.current = requestAnimationFrame(() => {
       scrollRafRef.current = null;
       const el = scrollRef.current;
-      if (!el || !pinnedToBottomRef.current) return;
-      el.scrollTop = el.scrollHeight;
+      if (!el || userScrolledAwayRef.current || !pinnedToBottomRef.current || userInteractingRef.current) {
+        return;
+      }
+      const nextTop = el.scrollHeight;
+      if (nextTop !== el.scrollTop) {
+        el.scrollTop = nextTop;
+        lastScrollTopRef.current = nextTop;
+      }
     });
 
     return () => {
@@ -361,12 +370,21 @@ export function MessageList({
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-auto"
+        onWheel={(e) => {
+          if (e.deltaY < 0) releasePin();
+          markUserInteracting();
+        }}
+        onTouchStart={() => markUserInteracting()}
+        onPointerDown={() => markUserInteracting()}
+        className="h-full overflow-y-auto chat-scroll"
       >
         <div className="px-4 max-w-3xl mx-auto w-full">
           <div className="divide-y divide-border/50">
             {timeline.map((item, i) => {
               if (item.kind === "message" && item.message) {
+                if (item.message.role === "assistant" && !item.message.content.trim()) {
+                  return null;
+                }
                 return <MessageBubble key={item.message.id} message={item.message} />;
               }
               if (item.kind === "toolcall" && item.toolCall) {
@@ -434,11 +452,11 @@ export function MessageList({
       {!autoScroll && timeline.length > 0 && (
         <button
           onClick={() => scrollToBottom(true)}
-          aria-label="Scroll to bottom"
-          className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bg-elevated border border-border text-text-muted hover:text-text-secondary text-[11px] shadow-lg transition-colors"
+          aria-label={isStreaming ? "Follow live output" : "Scroll to bottom"}
+          className="absolute bottom-[5.5rem] left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-bg-elevated border border-border text-text-secondary hover:text-text text-[12px] shadow-lg transition-colors safe-bottom"
         >
           <ArrowDown />
-          Scroll to bottom
+          {isStreaming ? "Follow live" : "Scroll to bottom"}
         </button>
       )}
     </div>

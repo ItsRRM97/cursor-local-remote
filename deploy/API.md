@@ -284,6 +284,8 @@ chmod 600 ~/.cursor-local-remote/cloudflare-api-token
 | Agent uses Grep/Read instead of notion-search | Workspace lacks MCP OAuth. Use **cursor-local-remote** project (has Notion token) or run `agent mcp login notion` once in that project folder on the Mac. CLR auto-picks the best authenticated workspace. |
 | Composio Cloudflare MCP fails | Reconnect with API Token permissions |
 | Old token (`wagon-kiosk`) | Use current token from `auth-token.json` |
+| Chat forces scroll to bottom while agent runs | Update CLR. Scroll up to read history; tap **Follow live** to resume. See [docs/USER_GUIDE.md](../docs/USER_GUIDE.md) |
+| `[REDACTED]` text in messages | Update CLR (transcript sanitizer). Empty tool-only turns no longer show placeholder text. |
 
 ---
 

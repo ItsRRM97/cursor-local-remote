@@ -171,22 +171,39 @@ All endpoints require a valid token (cookie or `Bearer` header).
 - [Cursor](https://cursor.com) with the CLI installed (`agent --version` should work)
 - A Cursor subscription (Pro, Team, etc.)
 
-## Development
-
-Contributions are welcome! Mainly created this so I can use Cursor when I don't feel like being at my desk. The whole project was vibecoded with Cursor, obviously. Run `npm run dev` to start the dev server.
-
-```bash
-git clone https://github.com/jon-makinen/cursor-local-remote.git
-cd cursor-local-remote
-npm install
-npm run dev
-```
-
 ## Remote access (internet)
 
 CLR runs on **your Mac** — it cannot be hosted on Vercel or other serverless platforms. For access from anywhere, use **Cloudflare Tunnel** on a subdomain you control.
 
 See **[deploy/README.md](./deploy/README.md)** for setup and **[deploy/API.md](./deploy/API.md)** for full API reference, auth layers, and troubleshooting.
+
+## User guide
+
+Day-to-day usage (scroll while streaming, queue, PWA, notifications): **[docs/USER_GUIDE.md](./docs/USER_GUIDE.md)**
+
+## Troubleshooting (quick)
+
+| Issue | Fix |
+|-------|-----|
+| Can't scroll up during agent run | Update to latest CLR. Scroll up freely; tap **Follow live** to resume auto-scroll. |
+| `[REDACTED]` in chat history | Update CLR (strips Cursor transcript placeholders). Reload the session. |
+| MCP tools fail over remote | Settings → enable **Workspace trust**. Select a project with MCP auth on the Mac. |
+| 401 / auth errors | Use `?token=` from terminal or `~/.cursor-local-remote/auth-token.json`. |
+
+More: [deploy/API.md](./deploy/API.md#troubleshooting) and [docs/USER_GUIDE.md](./docs/USER_GUIDE.md).
+
+## Development
+
+Contributions are welcome! Mainly created this so I can use Cursor when I don't feel like being at my desk. The whole project was vibecoded with Cursor, obviously. Run `npm run dev` to start the dev server.
+
+```bash
+git clone https://github.com/ItsRRM97/cursor-local-remote.git
+cd cursor-local-remote
+npm install
+npm run dev
+```
+
+Upstream: [jon-makinen/cursor-local-remote](https://github.com/jon-makinen/cursor-local-remote).
 
 ## License
 

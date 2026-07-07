@@ -49,7 +49,9 @@ Current token: `~/.cursor-local-remote/auth-token.json` (field `token`).
 
 ## Full API & deployment reference
 
-See **[deploy/API.md](./API.md)** for endpoints, auth layers, launchd labels, setup commands, and troubleshooting.
+See **[deploy/README.md](./deploy/README.md)** for setup and **[deploy/API.md](./deploy/API.md)** for full API reference, auth layers, and troubleshooting.
+
+**User guide:** [docs/USER_GUIDE.md](./docs/USER_GUIDE.md) (scroll while streaming, queue, PWA, notifications).
 
 ## Mac sleep
 

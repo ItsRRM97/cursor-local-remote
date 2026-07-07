@@ -198,7 +198,7 @@ export function ChatInput({
                   <img src={img.preview} alt="" className="w-full h-full object-cover" />
                   <button
                     onClick={() => removeImage(i)}
-                    className="absolute top-0 right-0 p-0.5 bg-black/70 rounded-bl text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-0 right-0 p-1.5 bg-black/70 rounded-bl text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity touch-visible"
                     aria-label="Remove image"
                   >
                     <CloseIcon size={10} />

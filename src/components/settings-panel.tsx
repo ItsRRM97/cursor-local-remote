@@ -282,6 +282,17 @@ export function SettingsPanel({ open, onClose, onDefaultModelChange }: SettingsP
 
               <div className="pt-3 mt-2 border-t border-border">
                 <div className="px-3 py-2">
+                  <p className="text-[12px] text-text">Tips</p>
+                  <ul className="mt-1.5 space-y-1.5 text-[11px] text-text-muted leading-snug list-disc pl-4">
+                    <li>While the agent runs, scroll up to read earlier messages. Tap <span className="text-text-secondary">Follow live</span> to resume auto-scroll.</li>
+                    <li>Tool-only turns hide empty assistant text (no more <span className="font-mono text-[10px]">[REDACTED]</span> placeholders in chat).</li>
+                    <li>Queue messages while streaming: type and tap <span className="text-text-secondary">+</span> to send after the current turn.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="pt-3 mt-2 border-t border-border">
+                <div className="px-3 py-2">
                   <p className="text-[12px] text-text">Cache</p>
                   <p className="text-[11px] text-text-muted mt-0.5 leading-tight">
                     Clear cached data if the app feels stale
