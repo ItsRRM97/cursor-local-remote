@@ -192,6 +192,8 @@ export function MessageList({
   const lastScrollTopRef = useRef(0);
   const userInteractingRef = useRef(false);
   const interactTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchActiveRef = useRef(false);
+  const touchStartYRef = useRef(0);
 
   const releasePin = useCallback(() => {
     userScrolledAwayRef.current = true;
@@ -218,7 +220,7 @@ export function MessageList({
     interactTimerRef.current = setTimeout(() => {
       userInteractingRef.current = false;
       interactTimerRef.current = null;
-    }, 500);
+    }, 1500);
   }, []);
 
   const handleScroll = useCallback(() => {
@@ -250,7 +252,12 @@ export function MessageList({
   const scrollRafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (userScrolledAwayRef.current || !pinnedToBottomRef.current || userInteractingRef.current) {
+    if (
+      userScrolledAwayRef.current ||
+      !pinnedToBottomRef.current ||
+      userInteractingRef.current ||
+      touchActiveRef.current
+    ) {
       return;
     }
 
@@ -261,7 +268,13 @@ export function MessageList({
     scrollRafRef.current = requestAnimationFrame(() => {
       scrollRafRef.current = null;
       const el = scrollRef.current;
-      if (!el || userScrolledAwayRef.current || !pinnedToBottomRef.current || userInteractingRef.current) {
+      if (
+        !el ||
+        userScrolledAwayRef.current ||
+        !pinnedToBottomRef.current ||
+        userInteractingRef.current ||
+        touchActiveRef.current
+      ) {
         return;
       }
       const nextTop = el.scrollHeight;
@@ -371,10 +384,25 @@ export function MessageList({
         ref={scrollRef}
         onScroll={handleScroll}
         onWheel={(e) => {
+          markUserInteracting();
           if (e.deltaY < 0) releasePin();
+        }}
+        onTouchStart={(e) => {
+          touchActiveRef.current = true;
+          touchStartYRef.current = e.touches[0]?.clientY ?? 0;
           markUserInteracting();
         }}
-        onTouchStart={() => markUserInteracting()}
+        onTouchMove={(e) => {
+          markUserInteracting();
+          const y = e.touches[0]?.clientY ?? touchStartYRef.current;
+          if (y - touchStartYRef.current > 6) releasePin();
+        }}
+        onTouchEnd={() => {
+          touchActiveRef.current = false;
+        }}
+        onTouchCancel={() => {
+          touchActiveRef.current = false;
+        }}
         onPointerDown={() => markUserInteracting()}
         className="h-full overflow-y-auto chat-scroll"
       >
