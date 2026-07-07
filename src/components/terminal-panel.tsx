@@ -331,18 +331,18 @@ export function TerminalPanel({ open, onClose, workspace, onCountChange }: Termi
       <div className="fixed inset-0 z-50 bg-bg-elevated flex flex-col sm:inset-auto sm:top-0 sm:right-0 sm:h-full sm:w-[380px] sm:border-l sm:border-border">
 
         {/* Header */}
-        <div className="flex items-center justify-between h-11 px-3 border-b border-border shrink-0">
+        <div className="flex items-center justify-between header-bar px-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[13px] font-medium text-text-secondary">Terminal</span>
+            <span className="text-clr-base font-medium text-text-secondary">Terminal</span>
             {tabs.length > 0 && (
-              <span className="text-[10px] text-text-muted">{tabs.length}</span>
+              <span className="text-clr-2xs text-text-muted">{tabs.length}</span>
             )}
           </div>
           <div className="flex items-center gap-0.5">
             <button
               onClick={handleNewShell}
               disabled={spawning}
-              className="p-1.5 rounded-md transition-colors text-text-muted hover:text-text-secondary hover:bg-bg-hover disabled:opacity-40"
+              className="icon-btn transition-colors text-text-muted hover:text-text-secondary hover:bg-bg-hover disabled:opacity-40"
               aria-label="New terminal"
             >
               {spawning ? <Spinner className="w-3.5 h-3.5" /> : <PlusIcon size={13} />}
@@ -350,7 +350,7 @@ export function TerminalPanel({ open, onClose, workspace, onCountChange }: Termi
             <button
               onClick={onClose}
               aria-label="Close"
-              className="p-1.5 rounded-md hover:bg-bg-hover text-text-muted hover:text-text-secondary transition-colors"
+              className="icon-btn hover:bg-bg-hover text-text-muted hover:text-text-secondary"
             >
               <CloseIcon size={13} />
             </button>
@@ -364,7 +364,7 @@ export function TerminalPanel({ open, onClose, workspace, onCountChange }: Termi
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
-                className={`group flex items-center gap-1.5 pl-2 pr-1 py-1.5 rounded-md text-[11px] font-mono transition-colors shrink-0 max-w-[150px] ${
+                className={`group flex items-center gap-1.5 pl-2 pr-1 py-1.5 rounded-md text-clr-xs font-mono transition-colors shrink-0 max-w-[150px] ${
                   t.id === activeTab
                     ? "bg-bg-active text-text"
                     : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
@@ -393,7 +393,7 @@ export function TerminalPanel({ open, onClose, workspace, onCountChange }: Termi
               <button
                 onClick={handleNewShell}
                 disabled={spawning}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] text-text-muted hover:text-text-secondary bg-bg-surface hover:bg-bg-hover transition-colors disabled:opacity-40"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-clr-base text-text-muted hover:text-text-secondary bg-bg-surface hover:bg-bg-hover transition-colors disabled:opacity-40"
               >
                 {spawning ? <Spinner className="w-3.5 h-3.5" /> : <PlusIcon size={13} />}
                 New terminal
@@ -420,12 +420,12 @@ export function TerminalPanel({ open, onClose, workspace, onCountChange }: Termi
           <div className="shrink-0 border-t border-border bg-bg-elevated">
             {!isRunning && (
               <div className="flex items-center justify-between px-3 py-1.5 border-b border-border">
-                <span className="text-[11px] text-text-muted">
+                <span className="text-clr-xs text-text-muted">
                   exited{current.exitCode !== 0 && current.exitCode !== null ? ` (${current.exitCode})` : ""}
                 </span>
                 <button
                   onClick={() => handleRemove(current.id)}
-                  className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-md text-clr-xs text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
                 >
                   <TrashIcon size={10} />
                   Remove
@@ -438,19 +438,19 @@ export function TerminalPanel({ open, onClose, workspace, onCountChange }: Termi
                 onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
                 className="flex items-center gap-2 px-3 py-2.5"
               >
-                <span className="text-[13px] font-mono shrink-0 text-text-muted">{">"}</span>
+                <span className="text-clr-base font-mono shrink-0 text-text-muted">{">"}</span>
                 <input
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Type a command..."
-                  className="flex-1 min-w-0 bg-transparent text-[13px] font-mono text-text placeholder:text-text-muted/50 focus:outline-none"
+                  className="flex-1 min-w-0 bg-transparent text-clr-base font-mono text-text placeholder:text-text-muted/50 focus:outline-none"
                   autoFocus
                 />
                 <button
                   type="button"
                   onClick={handleCtrlC}
-                  className="shrink-0 px-2 py-1 rounded-md text-[11px] font-mono text-error/60 hover:text-error hover:bg-error/10 transition-colors"
+                  className="shrink-0 px-2 py-1 rounded-md text-clr-xs font-mono text-error/60 hover:text-error hover:bg-error/10 transition-colors"
                 >
                   ^C
                 </button>

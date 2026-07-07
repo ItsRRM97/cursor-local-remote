@@ -14,7 +14,7 @@ function CopyButton({ copied, onClick }: { copied: boolean; onClick: () => void 
   return (
     <button
       onClick={onClick}
-      className="absolute top-2 right-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-2 -m-1 rounded text-text-muted hover:text-text-secondary touch-visible"
+      className="absolute top-1 right-0 icon-btn opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-text-muted hover:text-text-secondary touch-visible"
       aria-label={copied ? "Copied" : "Copy message"}
     >
       {copied ? <CheckIcon /> : <CopyIcon />}
@@ -41,7 +41,7 @@ export const MessageBubble = memo(function MessageBubble({ message }: MessageBub
   if (isUser) {
     return (
       <div className="py-3 group relative">
-        <div className="text-[13px] leading-[1.6] text-text whitespace-pre-wrap break-words bg-bg-surface rounded-lg px-3 py-2">
+        <div className="text-clr-base leading-[1.6] text-text whitespace-pre-wrap break-words bg-bg-surface rounded-lg px-3.5 py-2.5">
           {message.content}
         </div>
         <CopyButton copied={copied} onClick={handleCopy} />

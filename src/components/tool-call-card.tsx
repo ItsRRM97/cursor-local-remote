@@ -160,7 +160,7 @@ function DiffBlock({ diff, startLine }: { diff: string; startLine?: number }) {
   const gutterWidth = hasLineNums ? String(Math.max(oldLine, newLine)).length : 0;
 
   return (
-    <pre className="bg-[#0d0d0d] rounded px-2 py-1.5 text-[11px] whitespace-pre-wrap break-all max-h-[300px] overflow-y-auto">
+    <pre className="bg-[#0d0d0d] rounded px-2 py-1.5 text-clr-xs whitespace-pre-wrap break-all max-h-[300px] overflow-y-auto">
       {lines.map((line, i) => (
         <span key={i} className={diffLineClass(line)}>
           {hasLineNums && (
@@ -242,7 +242,7 @@ export function ToolCallGroup({ toolCalls }: { toolCalls: ToolCallInfo[] }) {
         onClick={() => { haptics.tap(); setExpanded((v) => !v); }}
         aria-expanded={expanded}
         aria-label={`Tool call group: ${groupSummary(toolCalls)}`}
-        className="flex items-center gap-2 text-[12px] text-text-muted hover:text-text-secondary transition-colors w-full text-left"
+        className="flex items-center gap-2 text-clr-sm text-text-muted hover:text-text-secondary transition-colors w-full text-left"
       >
         <span className={statusColor}>
           {!allDone ? (
@@ -283,7 +283,7 @@ export function ToolCallCard({ toolCall, defaultExpanded }: ToolCallCardProps) {
         onClick={() => { haptics.tap(); setExpanded((v) => !v); }}
         aria-expanded={expanded}
         aria-label={`${actionLabel(toolCall)} ${summaryText(toolCall)}`}
-        className="flex items-center gap-2 text-[12px] text-text-muted hover:text-text-secondary transition-colors w-full text-left"
+        className="flex items-center gap-2 text-clr-sm text-text-muted hover:text-text-secondary transition-colors w-full text-left"
       >
         <span className={statusColor}>
           {isRunning ? (
@@ -301,20 +301,20 @@ export function ToolCallCard({ toolCall, defaultExpanded }: ToolCallCardProps) {
         </span>
 
         {toolCall.result && (
-          <span className="text-text-muted text-[11px] shrink-0">{toolCall.result}</span>
+          <span className="text-text-muted text-clr-xs shrink-0">{toolCall.result}</span>
         )}
 
         <ChevronDown className={`shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />
       </button>
 
       {expanded && (
-        <div className="mt-1.5 ml-5 pl-3 border-l-2 border-border text-[11px] font-mono text-text-muted py-1.5 space-y-1 overflow-x-auto">
+        <div className="mt-1.5 ml-5 pl-3 border-l-2 border-border text-clr-xs font-mono text-text-muted py-1.5 space-y-1 overflow-x-auto">
           <p className="text-text-secondary">{toolCall.name}</p>
 
           {toolCall.path && <p className="break-all">{toolCall.path}</p>}
 
           {toolCall.type === "shell" && toolCall.command && (
-            <pre className="bg-[#0d0d0d] rounded px-2 py-1.5 text-[11px] text-[#c9d1d9] whitespace-pre-wrap break-all">
+            <pre className="bg-[#0d0d0d] rounded px-2 py-1.5 text-clr-xs text-[#c9d1d9] whitespace-pre-wrap break-all">
               $ {toolCall.command}
             </pre>
           )}
@@ -390,7 +390,7 @@ function FileChangeRow({ change }: { change: FileChange }) {
     <li>
       <button
         onClick={() => { if (hasDiffs) { haptics.tap(); setOpen((v) => !v); } }}
-        className={`flex items-center gap-2 text-[11px] font-mono w-full text-left py-0.5 ${hasDiffs ? "hover:text-text-secondary cursor-pointer" : ""}`}
+        className={`flex items-center gap-2 text-clr-xs font-mono w-full text-left py-0.5 ${hasDiffs ? "hover:text-text-secondary cursor-pointer" : ""}`}
       >
         <svg
           className="w-3 h-3 shrink-0 text-text-muted"
@@ -439,7 +439,7 @@ export function ChangesSummary({ toolCalls }: { toolCalls: ToolCallInfo[] }) {
         onClick={() => { haptics.tap(); setExpanded((v) => !v); }}
         aria-expanded={expanded}
         aria-label={`Changes summary: ${changes.length} files`}
-        className="flex items-center gap-2 text-[12px] text-text-muted hover:text-text-secondary transition-colors w-full text-left"
+        className="flex items-center gap-2 text-clr-sm text-text-muted hover:text-text-secondary transition-colors w-full text-left"
       >
         <svg
           className="w-3.5 h-3.5 shrink-0"
@@ -458,7 +458,7 @@ export function ChangesSummary({ toolCalls }: { toolCalls: ToolCallInfo[] }) {
         <span className="font-medium text-text-secondary">
           {changes.length} file{changes.length > 1 ? "s" : ""} changed
         </span>
-        <span className="text-text-muted text-[11px]">{parts.join(", ")}</span>
+        <span className="text-text-muted text-clr-xs">{parts.join(", ")}</span>
         <ChevronDown className={`shrink-0 transition-transform ml-auto ${expanded ? "rotate-180" : ""}`} />
       </button>
       {expanded && (
@@ -485,7 +485,7 @@ export function TodoLogCard({ toolCall, defaultOpen = true }: { toolCall: ToolCa
         onClick={() => { haptics.tap(); setOpen((v) => !v); }}
         aria-expanded={open}
         aria-label={`Todo list: ${done}/${todos.length} done`}
-        className="flex items-center gap-2 text-[12px] text-text-muted hover:text-text-secondary transition-colors w-full text-left"
+        className="flex items-center gap-2 text-clr-sm text-text-muted hover:text-text-secondary transition-colors w-full text-left"
       >
         <svg
           className="w-3.5 h-3.5 shrink-0"
@@ -500,7 +500,7 @@ export function TodoLogCard({ toolCall, defaultOpen = true }: { toolCall: ToolCa
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
         </svg>
         <span className="font-medium text-text-secondary">Todo</span>
-        <span className="text-text-muted text-[11px]">
+        <span className="text-text-muted text-clr-xs">
           {done}/{todos.length} done{inProgress > 0 ? ` · ${inProgress} active` : ""}
         </span>
         <ChevronDown className={`shrink-0 transition-transform ml-auto ${open ? "rotate-180" : ""}`} />
@@ -508,7 +508,7 @@ export function TodoLogCard({ toolCall, defaultOpen = true }: { toolCall: ToolCa
       {open && (
         <ul className="mt-1.5 ml-5 pl-3 border-l-2 border-border space-y-0.5 py-1">
           {todos.map((t) => (
-            <li key={t.id} className="flex items-start gap-1.5 text-[11px] font-mono">
+            <li key={t.id} className="flex items-start gap-1.5 text-clr-xs font-mono">
               <TodoStatusIcon status={t.status} />
               <span
                 className={

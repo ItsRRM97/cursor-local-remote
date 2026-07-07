@@ -187,7 +187,7 @@ export function ChatInput({
             placeholder={isStreaming ? "Type to queue a message..." : "Ask Cursor anything..."}
             aria-label="Message input"
             rows={1}
-            className="w-full resize-none bg-transparent px-3.5 pt-2.5 pb-1 pr-10 text-[13px] text-text placeholder:text-text-muted focus:outline-none"
+            className="w-full resize-none bg-transparent px-3.5 pt-3 pb-1.5 pr-12 text-clr-base text-text placeholder:text-text-muted focus:outline-none"
           />
 
           {images.length > 0 && (
@@ -219,7 +219,7 @@ export function ChatInput({
                     haptics.select();
                     onModeChange(mode.id);
                   }}
-                  className={`px-3 py-1.5 rounded text-[12px] font-medium transition-colors ${
+                  className={`mode-btn rounded font-medium transition-colors ${
                     selectedMode === mode.id
                       ? "bg-bg-active text-text"
                       : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
@@ -229,7 +229,7 @@ export function ChatInput({
                 </button>
               ))}
 
-              <span className="hidden sm:inline text-[10px] text-text-muted/50 ml-2 select-none">
+              <span className="hidden sm:inline text-clr-2xs text-text-muted/50 ml-2 select-none">
                 Enter ↵ send · Shift+Enter newline
               </span>
             </div>
@@ -244,7 +244,7 @@ export function ChatInput({
                   aria-haspopup="listbox"
                   aria-expanded={modelOpen}
                   aria-label="Select model"
-                  className="flex items-center gap-1 px-3 py-1.5 rounded text-[12px] text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
+                  className="mode-btn flex items-center gap-1 rounded text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
                 >
                   {modelsLoading ? (
                     <Spinner className="w-2.5 h-2.5" />
@@ -294,7 +294,7 @@ export function ChatInput({
               {isStreaming && (
                 <button
                   onClick={handleStop}
-                  className="p-2 rounded-md text-text-muted hover:text-text transition-colors"
+                  className="icon-btn text-text-muted hover:text-text transition-colors"
                   aria-label="Stop streaming"
                 >
                   <StopIcon />
@@ -303,7 +303,7 @@ export function ChatInput({
               <button
                 onClick={handleSend}
                 disabled={(!value.trim() && images.length === 0) || uploading}
-                className="p-2 rounded-md text-text-muted hover:text-text disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                className="icon-btn text-text-muted hover:text-text disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
                 aria-label={uploading ? "Uploading..." : isStreaming ? "Queue message" : "Send message"}
               >
                 {uploading ? <Spinner className="w-4 h-4" /> : isStreaming ? <PlusIcon size={18} /> : <ArrowUp />}
@@ -334,7 +334,7 @@ function ModelRow({
         haptics.select();
         onSelect();
       }}
-      className={`w-full text-left px-3 py-1.5 text-[12px] flex items-center justify-between gap-2 transition-colors ${
+      className={`w-full text-left px-3 py-2.5 text-clr-sm flex items-center justify-between gap-2 transition-colors ${
         selected
           ? "text-text bg-bg-active"
           : "text-text-secondary hover:bg-bg-hover hover:text-text"
@@ -343,12 +343,12 @@ function ModelRow({
       <span className="truncate">{model.label}</span>
       <span className="flex items-center gap-1 shrink-0">
         {model.isDefault && (
-          <span className="text-[9px] px-1 py-px rounded bg-bg-hover text-text-secondary font-medium">
+          <span className="text-clr-3xs px-1 py-px rounded bg-bg-hover text-text-secondary font-medium">
             default
           </span>
         )}
         {model.isCurrent && (
-          <span className="text-[9px] px-1 py-px rounded bg-success/15 text-success font-medium">
+          <span className="text-clr-3xs px-1 py-px rounded bg-success/15 text-success font-medium">
             current
           </span>
         )}

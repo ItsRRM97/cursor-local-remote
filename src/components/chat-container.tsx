@@ -229,25 +229,25 @@ export function ChatContainer({
 
   return (
     <div className="h-full flex flex-col">
-      <header className="shrink-0 flex items-center justify-between h-11 px-3 border-b border-border">
-        <div className="flex items-center gap-2">
+      <header className="shrink-0 flex items-center justify-between header-bar px-2 sm:px-3 border-b border-border">
+        <div className="flex items-center gap-1 sm:gap-2 min-w-0">
           <button
             onClick={() => {
               haptics.tap();
               onOpenSidebar?.();
             }}
             aria-label="Open session sidebar"
-            className="p-2 rounded-md hover:bg-bg-hover transition-colors text-text-muted hover:text-text-secondary"
+            className="icon-btn shrink-0 hover:bg-bg-hover text-text-muted hover:text-text-secondary"
           >
             <MenuIcon />
           </button>
-          <span className="text-[13px] font-medium text-text-secondary">{dirName}</span>
+          <span className="text-clr-base font-medium text-text-secondary truncate">{dirName}</span>
           {gitInfo && (
             <button
               onClick={() => setGitPanelOpen(true)}
-              className="flex items-center gap-1 text-[10px] text-text-muted bg-bg-surface hover:bg-bg-hover rounded px-1.5 py-0.5 transition-colors"
+              className="touch-chip text-text-muted bg-bg-surface hover:bg-bg-hover shrink-0"
             >
-              <GitBranchIcon size={10} />
+              <GitBranchIcon size={12} />
               <span className="truncate max-w-[80px]">{gitInfo.branch}</span>
               {gitInfo.changedFiles > 0 && (
                 <span className="text-warning">+{gitInfo.changedFiles}</span>
@@ -256,9 +256,9 @@ export function ChatContainer({
           )}
           <button
             onClick={() => setTerminalOpen(true)}
-            className="flex items-center gap-1 text-[10px] text-text-muted bg-bg-surface hover:bg-bg-hover rounded px-1.5 py-0.5 transition-colors"
+            className="touch-chip text-text-muted bg-bg-surface hover:bg-bg-hover shrink-0"
           >
-            <TerminalIcon size={10} />
+            <TerminalIcon size={12} />
             <span>Terminal</span>
             {terminalCount > 0 && (
               <span className="text-success">{terminalCount}</span>
@@ -268,25 +268,25 @@ export function ChatContainer({
             <>
               {model && (
                 <>
-                  <span className="text-text-muted text-[11px]">/</span>
-                  <span className="text-[11px] text-text-muted truncate max-w-[120px]">{model}</span>
+                  <span className="text-text-muted text-clr-xs">/</span>
+                  <span className="text-clr-xs text-text-muted truncate max-w-[120px]">{model}</span>
                 </>
               )}
-              <span className="text-[11px] text-text-muted/60 tabular-nums">{elapsedLabel}</span>
+              <span className="text-clr-xs text-text-muted/60 tabular-nums">{elapsedLabel}</span>
             </>
           )}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           {sessionId && (
-            <span className="text-[10px] text-text-muted font-mono mr-1 hidden sm:inline opacity-60">
+            <span className="text-clr-2xs text-text-muted font-mono mr-1 hidden sm:inline opacity-60">
               {sessionId.slice(0, 8)}
             </span>
           )}
           {sessionId && messages.length > 0 && (
             <button
               onClick={handleExport}
-              className="p-2 rounded-md hover:bg-bg-hover transition-colors text-text-muted hover:text-text-secondary"
+              className="icon-btn hover:bg-bg-hover text-text-muted hover:text-text-secondary"
               aria-label={exportCopied ? "Copied to clipboard" : "Export conversation"}
             >
               {exportCopied ? <CheckIcon size={14} /> : <ExportIcon size={14} />}
@@ -297,7 +297,7 @@ export function ChatContainer({
               haptics.tap();
               onOpenSettings?.();
             }}
-            className="p-2 rounded-md hover:bg-bg-hover transition-colors text-text-muted hover:text-text-secondary"
+            className="icon-btn hover:bg-bg-hover text-text-muted hover:text-text-secondary"
             aria-label="Settings"
           >
             <SettingsIcon size={16} />
@@ -307,7 +307,7 @@ export function ChatContainer({
               haptics.tap();
               onOpenQr?.();
             }}
-            className="p-2 rounded-md hover:bg-bg-hover transition-colors text-text-muted hover:text-text-secondary"
+            className="icon-btn hover:bg-bg-hover text-text-muted hover:text-text-secondary"
             aria-label="Connect device"
           >
             <svg
@@ -330,20 +330,20 @@ export function ChatContainer({
       </header>
 
       {mcpFallback && (
-        <div className="shrink-0 px-4 py-2 border-b border-warning/20 text-warning text-[11px] bg-warning/5">
+        <div className="shrink-0 px-4 py-2 border-b border-warning/20 text-warning text-clr-xs bg-warning/5">
           Agent runs from <span className="font-mono">{workspace.split("/").pop()}</span> for MCP (Notion, Composio). Pick a project in the sidebar to change workspace.
         </div>
       )}
 
       {error && (
-        <div className="shrink-0 px-4 py-2 border-b border-error/20 text-error text-[12px] bg-error/5">
+        <div className="shrink-0 px-4 py-2 border-b border-error/20 text-error text-clr-sm bg-error/5">
           {error}
         </div>
       )}
 
       {notification.pending && (
         <div
-          className={`shrink-0 flex items-center justify-between px-4 py-2 border-b text-[12px] ${
+          className={`shrink-0 flex items-center justify-between px-4 py-2 border-b text-clr-sm ${
             notification.pending.type === "error"
               ? "border-error/20 text-error bg-error/5"
               : "border-success/20 text-success bg-success/5"
@@ -361,7 +361,7 @@ export function ChatContainer({
           </span>
           <button
             onClick={notification.dismiss}
-            className="p-0.5 rounded hover:bg-bg-hover transition-colors"
+            className="icon-btn hover:bg-bg-hover transition-colors"
             aria-label="Dismiss notification"
           >
             <CloseIcon size={12} />

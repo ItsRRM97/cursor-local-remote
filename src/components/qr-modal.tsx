@@ -49,27 +49,27 @@ export function QrModal({ open, onClose }: QrModalProps) {
         className="bg-bg-elevated border border-border rounded-xl p-6 max-w-xs w-full mx-4 text-center"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-[13px] font-medium text-text mb-1">Connect device</p>
-        <p className="text-[12px] text-text-muted mb-5">Scan from any device on your network</p>
+        <p className="text-clr-base font-medium text-text mb-1">Connect device</p>
+        <p className="text-clr-sm text-text-muted mb-5">Scan from any device on your network</p>
 
         {info ? (
           <>
             <div className="bg-white rounded-lg p-3 inline-block mb-3">
               <QRCodeSVG value={info.authUrl} size={180} />
             </div>
-            <p className="font-mono text-[12px] text-text-secondary">{info.url}</p>
+            <p className="font-mono text-clr-sm text-text-secondary">{info.url}</p>
           </>
         ) : error ? (
-          <div className="py-10 text-error text-[12px]">{error}</div>
+          <div className="py-10 text-error text-clr-sm">{error}</div>
         ) : (
-          <div className="py-10 text-text-muted text-[12px]">
+          <div className="py-10 text-text-muted text-clr-sm">
             <Spinner className="w-3.5 h-3.5" />
           </div>
         )}
 
         <button
           onClick={() => { haptics.tap(); onClose(); }}
-          className="mt-4 w-full py-1.5 rounded-lg text-[12px] text-text-muted hover:text-text-secondary transition-colors"
+          className="mt-4 w-full py-1.5 rounded-lg text-clr-sm text-text-muted hover:text-text-secondary transition-colors"
         >
           Close
         </button>

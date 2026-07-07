@@ -163,12 +163,12 @@ export function SettingsPanel({ open, onClose, onDefaultModelChange }: SettingsP
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between h-11 px-3 border-b border-border shrink-0">
-          <span className="text-[13px] font-medium text-text-secondary">Settings</span>
+        <div className="flex items-center justify-between header-bar px-3 border-b border-border shrink-0">
+          <span className="text-clr-base font-medium text-text-secondary">Settings</span>
           <button
             onClick={onClose}
             aria-label="Close settings"
-            className="p-1 rounded-md hover:bg-bg-hover text-text-muted hover:text-text-secondary transition-colors"
+            className="icon-btn hover:bg-bg-hover text-text-muted hover:text-text-secondary"
           >
             <CloseIcon size={14} />
           </button>
@@ -185,11 +185,11 @@ export function SettingsPanel({ open, onClose, onDefaultModelChange }: SettingsP
                 <button
                   key={key}
                   onClick={() => toggle(key)}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-md hover:bg-bg-hover transition-colors text-left"
+                  className="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-md hover:bg-bg-hover transition-colors text-left min-h-[var(--clr-touch-min)]"
                 >
                   <div className="min-w-0">
-                    <p className="text-[12px] text-text">{TOGGLE_LABELS[key].label}</p>
-                    <p className="text-[11px] text-text-muted mt-0.5 leading-tight">{TOGGLE_LABELS[key].description}</p>
+                    <p className="text-clr-sm text-text">{TOGGLE_LABELS[key].label}</p>
+                    <p className="text-clr-xs text-text-muted mt-0.5 leading-tight">{TOGGLE_LABELS[key].description}</p>
                   </div>
                   <div
                     className={`shrink-0 w-8 h-[18px] rounded-full transition-colors relative ${
@@ -207,15 +207,15 @@ export function SettingsPanel({ open, onClose, onDefaultModelChange }: SettingsP
 
               <div className="pt-3 mt-2 border-t border-border">
                 <div className="px-3 py-2">
-                  <p className="text-[12px] text-text">Default model</p>
-                  <p className="text-[11px] text-text-muted mt-0.5 leading-tight">
+                  <p className="text-clr-sm text-text">Default model</p>
+                  <p className="text-clr-xs text-text-muted mt-0.5 leading-tight">
                     Model used for new sessions
                   </p>
                 </div>
                 <div className="relative px-3">
                   <button
                     onClick={() => setModelDropdownOpen((v) => !v)}
-                    className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-bg-surface border border-border text-[12px] text-text hover:bg-bg-hover transition-colors"
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-bg-surface border border-border text-clr-sm text-text hover:bg-bg-hover transition-colors"
                   >
                     <span className="truncate">{currentModelLabel}</span>
                     <ChevronDown />
@@ -228,7 +228,7 @@ export function SettingsPanel({ open, onClose, onDefaultModelChange }: SettingsP
                           <button
                             key={m.id}
                             onClick={() => handleModelSelect(m.id)}
-                            className={`w-full text-left px-3 py-1.5 text-[12px] transition-colors ${
+                            className={`w-full text-left px-3 py-1.5 text-clr-sm transition-colors ${
                               settings.default_model === m.id
                                 ? "text-text bg-bg-active"
                                 : "text-text-secondary hover:bg-bg-hover hover:text-text"
@@ -245,8 +245,8 @@ export function SettingsPanel({ open, onClose, onDefaultModelChange }: SettingsP
 
               <div className="pt-3 mt-2 border-t border-border">
                 <div className="px-3 py-2">
-                  <p className="text-[12px] text-text">Webhook notifications</p>
-                  <p className="text-[11px] text-text-muted mt-0.5 leading-tight">
+                  <p className="text-clr-sm text-text">Webhook notifications</p>
+                  <p className="text-clr-xs text-text-muted mt-0.5 leading-tight">
                     Get notified when the agent finishes via any webhook
                   </p>
                 </div>
@@ -256,13 +256,13 @@ export function SettingsPanel({ open, onClose, onDefaultModelChange }: SettingsP
                     value={settings.webhook_url}
                     onChange={(e) => handleWebhookUrlChange(e.target.value)}
                     placeholder="https://hooks.slack.com/..."
-                    className="w-full px-3 py-2 rounded-md bg-bg-surface border border-border text-[12px] text-text placeholder:text-text-muted/50 focus:outline-none focus:border-text-muted transition-colors"
+                    className="w-full px-3 py-2 rounded-md bg-bg-surface border border-border text-clr-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-text-muted transition-colors"
                     aria-label="Webhook URL"
                   />
                   <button
                     onClick={handleWebhookTest}
                     disabled={!settings.webhook_url || webhookTestStatus === "sending"}
-                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-bg-surface border border-border text-[12px] text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-bg-surface border border-border text-clr-sm text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {webhookTestStatus === "sending" && (
                       <span className="inline-block w-3 h-3 rounded-full border-2 border-text-muted border-t-transparent animate-spin" />
@@ -272,7 +272,7 @@ export function SettingsPanel({ open, onClose, onDefaultModelChange }: SettingsP
                     {webhookTestStatus === "idle" && "Send test"}
                     {webhookTestStatus === "sending" && "Sending..."}
                   </button>
-                  <p className="text-[10px] text-text-muted/60 leading-tight px-0.5">
+                  <p className="text-clr-2xs text-text-muted/60 leading-tight px-0.5">
                     Phone push: <strong>ntfy</strong> (https://ntfy.sh/your-topic — install app, subscribe to topic),
                     Slack/Discord webhooks, or Pushover (https://api.pushover.net/1/messages.json with token+user in JSON body).
                     Sends when an agent finishes — use Send test to verify.
@@ -282,10 +282,10 @@ export function SettingsPanel({ open, onClose, onDefaultModelChange }: SettingsP
 
               <div className="pt-3 mt-2 border-t border-border">
                 <div className="px-3 py-2">
-                  <p className="text-[12px] text-text">Tips</p>
-                  <ul className="mt-1.5 space-y-1.5 text-[11px] text-text-muted leading-snug list-disc pl-4">
+                  <p className="text-clr-sm text-text">Tips</p>
+                  <ul className="mt-1.5 space-y-1.5 text-clr-xs text-text-muted leading-snug list-disc pl-4">
                     <li>While the agent runs, scroll up to read earlier messages. Tap <span className="text-text-secondary">Follow live</span> to resume auto-scroll.</li>
-                    <li>Tool-only turns hide empty assistant text (no more <span className="font-mono text-[10px]">[REDACTED]</span> placeholders in chat).</li>
+                    <li>Tool-only turns hide empty assistant text (no more <span className="font-mono text-clr-2xs">[REDACTED]</span> placeholders in chat).</li>
                     <li>Queue messages while streaming: type and tap <span className="text-text-secondary">+</span> to send after the current turn.</li>
                   </ul>
                 </div>
@@ -293,15 +293,15 @@ export function SettingsPanel({ open, onClose, onDefaultModelChange }: SettingsP
 
               <div className="pt-3 mt-2 border-t border-border">
                 <div className="px-3 py-2">
-                  <p className="text-[12px] text-text">Cache</p>
-                  <p className="text-[11px] text-text-muted mt-0.5 leading-tight">
+                  <p className="text-clr-sm text-text">Cache</p>
+                  <p className="text-clr-xs text-text-muted mt-0.5 leading-tight">
                     Clear cached data if the app feels stale
                   </p>
                 </div>
                 <div className="px-3">
                   <button
                     onClick={handleClearCache}
-                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-bg-surface border border-border text-[12px] text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
+                    className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md bg-bg-surface border border-border text-clr-sm text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
                   >
                     {cacheCleared ? (
                       <>

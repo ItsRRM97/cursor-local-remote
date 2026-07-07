@@ -131,10 +131,10 @@ function SessionTooltip({ session, children }: { session: StoredSession; childre
           className="fixed z-[100] pointer-events-none"
           style={{ left: pos.x, top: pos.y }}
         >
-          <div className="relative -translate-x-1/2 -translate-y-full -mt-1.5 max-w-[240px] px-2.5 py-1.5 rounded-md bg-bg-elevated border border-border shadow-lg">
-            <p className="text-[11px] text-text leading-snug break-words">{session.title}</p>
+          <div className="relative -translate-x-1/2 -translate-y-full -mt-1.5 max-w-[240px] px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] bg-bg-elevated border border-border shadow-lg">
+            <p className="text-clr-xs text-text leading-snug break-words">{session.title}</p>
             {session.preview && session.preview !== session.title && (
-              <p className="text-[10px] text-text-muted mt-0.5 leading-snug break-words line-clamp-3">{session.preview}</p>
+              <p className="text-clr-2xs text-text-muted mt-0.5 leading-snug break-words line-clamp-3">{session.preview}</p>
             )}
             <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-[5px] border-x-transparent border-t-[5px] border-t-border" />
           </div>
@@ -320,8 +320,8 @@ export function SessionSidebar({
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between h-11 px-3 border-b border-border shrink-0">
-          <span className="text-[13px] font-medium text-text-secondary">Sessions</span>
+        <div className="flex items-center justify-between header-bar px-3 border-b border-border shrink-0">
+          <span className="text-clr-base font-medium text-text-secondary">Sessions</span>
           <div className="flex items-center gap-0.5">
             <button
               onClick={() => {
@@ -331,14 +331,14 @@ export function SessionSidebar({
               }}
               disabled={loading}
               aria-label="Refresh sessions"
-              className="p-1 rounded-md hover:bg-bg-hover text-text-muted hover:text-text-secondary transition-colors disabled:opacity-40"
+              className="icon-btn hover:bg-bg-hover text-text-muted hover:text-text-secondary disabled:opacity-40"
             >
               <RefreshIcon size={14} className={loading ? "animate-spin" : ""} />
             </button>
             <button
               onClick={onClose}
               aria-label="Close sidebar"
-              className="p-1 rounded-md hover:bg-bg-hover text-text-muted hover:text-text-secondary transition-colors"
+              className="icon-btn hover:bg-bg-hover text-text-muted hover:text-text-secondary"
             >
               <CloseIcon size={14} />
             </button>
@@ -352,7 +352,7 @@ export function SessionSidebar({
               onNewSession(ws);
               onClose();
             }}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[12px] text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] text-clr-sm text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
           >
             <PlusIcon />
             New session
@@ -369,7 +369,7 @@ export function SessionSidebar({
                   <button
                     key={path}
                     onClick={() => handleProjectSelect(path)}
-                    className={`w-full flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12px] transition-colors ${
+                    className={`w-full flex items-center gap-1.5 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] text-clr-sm transition-colors ${
                       isActive
                         ? "bg-bg-active text-text"
                         : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
@@ -392,7 +392,7 @@ export function SessionSidebar({
                 haptics.tap();
                 setProjectDropdownOpen((v) => !v);
               }}
-              className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-[12px] text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
+              className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] text-clr-sm text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
             >
               <span className="truncate">{currentProjectName}</span>
               <ChevronDown />
@@ -403,7 +403,7 @@ export function SessionSidebar({
                 <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-bg-elevated border border-border rounded-lg shadow-xl py-1 max-h-60 overflow-y-auto">
                   <button
                     onClick={() => handleProjectSelect("__all__")}
-                    className={`w-full text-left px-3 py-1.5 text-[12px] transition-colors ${
+                    className={`w-full text-left px-3 py-1.5 text-clr-sm transition-colors ${
                       selectedProject === "__all__"
                         ? "text-text bg-bg-active"
                         : "text-text-secondary hover:bg-bg-hover hover:text-text"
@@ -418,7 +418,7 @@ export function SessionSidebar({
                       <button
                         key={p.key}
                         onClick={() => handleProjectSelect(p.path)}
-                        className={`w-full text-left px-3 py-1.5 text-[12px] transition-colors flex items-center gap-2 ${
+                        className={`w-full text-left px-3 py-1.5 text-clr-sm transition-colors flex items-center gap-2 ${
                           selectedProject === p.path
                             ? "text-text bg-bg-active"
                             : "text-text-secondary hover:bg-bg-hover hover:text-text"
@@ -431,7 +431,7 @@ export function SessionSidebar({
                               <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-success" />
                             )}
                           </div>
-                          <span className="block text-[10px] text-text-muted font-mono truncate">{p.path}</span>
+                          <span className="block text-clr-2xs text-text-muted font-mono truncate">{p.path}</span>
                         </div>
                         <span
                           onClick={(e) => toggleStar(e, p.path)}
@@ -458,7 +458,7 @@ export function SessionSidebar({
                 setShowArchived((v) => !v);
               }}
               aria-pressed={showArchived}
-              className={`flex-1 flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[12px] transition-colors ${
+              className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] text-clr-sm transition-colors ${
                 showArchived
                   ? "text-text bg-bg-active"
                   : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
@@ -471,7 +471,7 @@ export function SessionSidebar({
               <button
                 onClick={handleArchiveAll}
                 title="Archive all visible sessions"
-                className="px-2 py-1.5 rounded-md text-[10px] text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors whitespace-nowrap"
+                className="px-2 py-1.5 rounded-md text-clr-2xs text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors whitespace-nowrap"
               >
                 Archive all
               </button>
@@ -481,16 +481,16 @@ export function SessionSidebar({
 
         <div className="overflow-y-auto flex-1 px-2 pb-2">
           {fetchError && (
-            <div className="mx-1 mb-2 px-2.5 py-2 rounded-md bg-error/10 text-error text-[11px]">
+            <div className="mx-1 mb-2 px-2.5 py-2 rounded-md bg-error/10 text-error text-clr-xs">
               {fetchError}
             </div>
           )}
           {loading ? (
-            <div className="flex items-center gap-2 justify-center py-8 text-text-muted text-[12px]">
+            <div className="flex items-center gap-2 justify-center py-8 text-text-muted text-clr-sm">
               <Spinner />
             </div>
           ) : sessions.length === 0 && !fetchError ? (
-            <p className="text-text-muted text-[12px] text-center py-8">
+            <p className="text-text-muted text-clr-sm text-center py-8">
               {showArchived ? "No archived sessions" : "No sessions"}
             </p>
           ) : (
@@ -506,7 +506,7 @@ export function SessionSidebar({
                         onClose();
                       }}
                       aria-current={s.id === currentSessionId ? "true" : undefined}
-                      className={`group w-full text-left px-2.5 py-2 rounded-md transition-colors ${
+                      className={`group w-full text-left px-3 py-3 rounded-md transition-colors min-h-[var(--clr-touch-min)] ${
                         s.id === currentSessionId
                           ? "bg-bg-active text-text"
                           : "hover:bg-bg-hover text-text-secondary"
@@ -515,14 +515,14 @@ export function SessionSidebar({
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5 flex-1 min-w-0 pr-12">
                           {status && <StatusIndicator status={status} />}
-                          <p className="text-[12px] truncate">{s.title}</p>
+                          <p className="text-clr-sm truncate">{s.title}</p>
                         </div>
-                        <span className="text-[10px] text-text-muted shrink-0">
+                        <span className="text-clr-2xs text-text-muted shrink-0">
                           {timeAgo(s.updatedAt)}
                         </span>
                       </div>
                       {selectedProject === "__all__" && (
-                        <p className="text-[10px] text-text-muted mt-0.5 font-mono truncate">
+                        <p className="text-clr-2xs text-text-muted mt-0.5 font-mono truncate">
                           {s.workspace.split("/").pop()}
                         </p>
                       )}
@@ -532,14 +532,14 @@ export function SessionSidebar({
                       <div className="absolute top-1 right-1 flex items-center gap-1">
                         <button
                           onClick={(e) => handleDeleteClick(e, s.id)}
-                          className="px-2 py-1 rounded text-[10px] font-medium bg-error/15 text-error hover:bg-error/25 transition-colors"
+                          className="px-2 py-1 rounded text-clr-2xs font-medium bg-error/15 text-error hover:bg-error/25 transition-colors"
                         >
                           Delete
                         </button>
                         <button
                           onClick={handleCancelDelete}
                           aria-label="Cancel delete"
-                          className="p-1 rounded text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
+                          className="icon-btn text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
                         >
                           <CloseIcon size={10} />
                         </button>

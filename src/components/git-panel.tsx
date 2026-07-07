@@ -61,11 +61,11 @@ function statusLabel(status: string): string {
 
 function DiffView({ diff }: { diff: string }) {
   if (!diff) {
-    return <p className="text-text-muted text-[11px] px-3 py-2">No diff available</p>;
+    return <p className="text-text-muted text-clr-xs px-3 py-2">No diff available</p>;
   }
   const lines = diff.split("\n");
   return (
-    <div className="overflow-x-auto text-[11px] font-mono leading-[1.6]">
+    <div className="overflow-x-auto text-clr-xs font-mono leading-[1.6]">
       {lines.map((line, i) => {
         let cls = "text-text-muted px-3";
         if (line.startsWith("+") && !line.startsWith("+++")) {
@@ -372,26 +372,26 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
       <div className="fixed inset-0 z-40 bg-black/60" aria-hidden="true" onClick={onClose} />
       <div className="fixed inset-0 z-50 bg-bg-elevated flex flex-col sm:inset-auto sm:top-0 sm:right-0 sm:h-full sm:w-[380px] sm:border-l sm:border-border">
         {/* Header */}
-        <div className="flex items-center justify-between h-11 px-3 border-b border-border shrink-0">
+        <div className="flex items-center justify-between header-bar px-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[13px] font-medium text-text-secondary shrink-0">Git</span>
+            <span className="text-clr-base font-medium text-text-secondary shrink-0">Git</span>
             {status?.branch && (
               <button
                 onClick={() => {
                   setBranchDropdownOpen((v) => !v);
                   if (!branches) fetchBranches();
                 }}
-                className="flex items-center gap-1 text-[11px] text-text-muted font-mono hover:text-text-secondary transition-colors min-w-0"
+                className="flex items-center gap-1 text-clr-xs text-text-muted font-mono hover:text-text-secondary transition-colors min-w-0"
               >
                 <span className="truncate max-w-[120px]">{status.branch}</span>
                 <ChevronDown size={8} />
               </button>
             )}
             {status && status.ahead > 0 && (
-              <span className="text-[10px] text-info shrink-0">↑{status.ahead}</span>
+              <span className="text-clr-2xs text-info shrink-0">↑{status.ahead}</span>
             )}
             {status && status.behind > 0 && (
-              <span className="text-[10px] text-warning shrink-0">↓{status.behind}</span>
+              <span className="text-clr-2xs text-warning shrink-0">↓{status.behind}</span>
             )}
           </div>
           <div className="flex items-center gap-0.5">
@@ -406,7 +406,7 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
             >
               <RefreshIcon size={13} className={loading ? "animate-spin" : ""} />
             </button>
-            <button onClick={onClose} aria-label="Close" className="p-1.5 rounded-md hover:bg-bg-hover text-text-muted hover:text-text-secondary transition-colors">
+            <button onClick={onClose} aria-label="Close" className="icon-btn hover:bg-bg-hover text-text-muted hover:text-text-secondary">
               <CloseIcon size={13} />
             </button>
           </div>
@@ -429,7 +429,7 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
                       value={newBranchName}
                       onChange={(e) => setNewBranchName(e.target.value)}
                       placeholder="New branch name..."
-                      className="flex-1 min-w-0 rounded border border-border bg-bg-surface px-2 py-1 text-[11px] text-text placeholder:text-text-muted/50 focus:outline-none focus:border-text-muted/40"
+                      className="flex-1 min-w-0 rounded border border-border bg-bg-surface px-2 py-1 text-clr-xs text-text placeholder:text-text-muted/50 focus:outline-none focus:border-text-muted/40"
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
@@ -440,7 +440,7 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
                     <button
                       onClick={handleCreateBranch}
                       disabled={!newBranchName.trim() || creatingBranch}
-                      className="shrink-0 px-2 py-1 rounded text-[10px] font-medium bg-bg-surface border border-border text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors disabled:opacity-40"
+                      className="shrink-0 px-2 py-1 rounded text-clr-2xs font-medium bg-bg-surface border border-border text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors disabled:opacity-40"
                     >
                       {creatingBranch ? <Spinner className="w-2.5 h-2.5" /> : "Create"}
                     </button>
@@ -450,7 +450,7 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
                       <button
                         key={b}
                         onClick={() => b !== branches.current && handleCheckout(b)}
-                        className={`w-full text-left px-3 py-1.5 text-[11px] font-mono transition-colors ${
+                        className={`w-full text-left px-3 py-1.5 text-clr-xs font-mono transition-colors ${
                           b === branches.current
                             ? "text-text bg-bg-active"
                             : "text-text-secondary hover:bg-bg-hover hover:text-text"
@@ -464,13 +464,13 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
                       <>
                         <div className="h-px bg-border mx-2 my-1" />
                         <div className="px-3 py-1">
-                          <span className="text-[9px] font-medium uppercase tracking-wider text-text-muted">Remote</span>
+                          <span className="text-clr-3xs font-medium uppercase tracking-wider text-text-muted">Remote</span>
                         </div>
                         {branches.remoteOnly.map((b) => (
                           <button
                             key={b}
                             onClick={() => handleCheckout(b)}
-                            className="w-full text-left px-3 py-1.5 text-[11px] font-mono text-text-muted hover:bg-bg-hover hover:text-text-secondary transition-colors"
+                            className="w-full text-left px-3 py-1.5 text-clr-xs font-mono text-text-muted hover:bg-bg-hover hover:text-text-secondary transition-colors"
                           >
                             {b}
                           </button>
@@ -485,7 +485,7 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
         )}
 
         {error && (
-          <div className="mx-3 mt-2 px-2.5 py-2 rounded-md bg-error/10 text-error text-[11px] break-words">
+          <div className="mx-3 mt-2 px-2.5 py-2 rounded-md bg-error/10 text-error text-clr-xs break-words">
             {error}
           </div>
         )}
@@ -495,12 +495,12 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
           {loading && !status ? (
             <div className="flex items-center justify-center py-12"><Spinner /></div>
           ) : !status?.branch ? (
-            <p className="text-text-muted text-[12px] text-center py-12">Not a git repository</p>
+            <p className="text-text-muted text-clr-sm text-center py-12">Not a git repository</p>
           ) : !hasChanges ? (
             <div className="text-center py-12">
-              <p className="text-text-muted text-[12px]">Working tree clean</p>
+              <p className="text-text-muted text-clr-sm">Working tree clean</p>
               {status.ahead > 0 && (
-                <p className="text-text-secondary text-[11px] mt-1">
+                <p className="text-text-secondary text-clr-xs mt-1">
                   {status.ahead} commit{status.ahead > 1 ? "s" : ""} ahead of remote
                 </p>
               )}
@@ -509,13 +509,13 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
             <div className="py-1">
               <div className="flex items-center gap-2 px-3 py-1.5">
                 <button onClick={toggleAll} className="shrink-0 w-4 text-center" aria-label="Toggle all">
-                  <span className={`text-[11px] font-bold transition-colors ${
+                  <span className={`text-clr-xs font-bold transition-colors ${
                     allSelected ? "text-text-secondary" : "text-text-muted/40"
                   }`}>
                     {allSelected ? "✓" : "–"}
                   </span>
                 </button>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-text-muted flex-1">
+                <span className="text-clr-2xs font-medium uppercase tracking-wider text-text-muted flex-1">
                   {selectedCount}/{allFiles.length} file{allFiles.length !== 1 ? "s" : ""}
                 </span>
                 {selectedCount > 0 && (
@@ -524,7 +524,7 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
                       <button
                         onClick={handleDiscardSelected}
                         disabled={discardingSelected}
-                        className="px-2 py-0.5 rounded text-[10px] font-medium bg-error/15 text-error hover:bg-error/25 transition-colors disabled:opacity-40"
+                        className="px-2 py-0.5 rounded text-clr-2xs font-medium bg-error/15 text-error hover:bg-error/25 transition-colors disabled:opacity-40"
                       >
                         {discardingSelected ? <Spinner className="w-2.5 h-2.5" /> : `Discard ${selectedCount}`}
                       </button>
@@ -539,7 +539,7 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
                   ) : (
                     <button
                       onClick={handleDiscardSelected}
-                      className="px-2 py-0.5 rounded text-[10px] font-medium text-text-muted/50 hover:text-error hover:bg-error/10 transition-colors"
+                      className="px-2 py-0.5 rounded text-clr-2xs font-medium text-text-muted/50 hover:text-error hover:bg-error/10 transition-colors"
                     >
                       Discard
                     </button>
@@ -569,7 +569,7 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
               <button
                 onClick={handleFetch}
                 disabled={fetching}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-medium bg-bg-surface border border-border text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-clr-xs font-medium bg-bg-surface border border-border text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors disabled:opacity-40 disabled:pointer-events-none"
               >
                 {fetching ? <Spinner className="w-3 h-3" /> : fetched ? <CheckIcon size={11} /> : (
                   <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.22-8.56" /><polyline points="21 3 21 9 15 9" /></svg>
@@ -579,7 +579,7 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
               <button
                 onClick={handlePull}
                 disabled={pulling}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-medium bg-bg-surface border border-border text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-clr-xs font-medium bg-bg-surface border border-border text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors disabled:opacity-40 disabled:pointer-events-none"
               >
                 {pulling ? <Spinner className="w-3 h-3" /> : pulled ? <CheckIcon size={11} /> : (
                   <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" /></svg>
@@ -589,7 +589,7 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
               <button
                 onClick={handlePush}
                 disabled={pushing}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-medium bg-bg-surface border border-border text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-clr-xs font-medium bg-bg-surface border border-border text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors disabled:opacity-40 disabled:pointer-events-none"
               >
                 {pushing ? <Spinner className="w-3 h-3" /> : pushed ? <CheckIcon size={11} /> : (
                   <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></svg>
@@ -604,7 +604,7 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
                   onChange={(e) => setCommitMsg(e.target.value)}
                   placeholder="Commit message..."
                   rows={2}
-                  className="w-full resize-none rounded-md border border-border bg-bg-surface px-2.5 py-2 text-[12px] text-text placeholder:text-text-muted/50 focus:outline-none focus:border-text-muted/40"
+                  className="w-full resize-none rounded-md border border-border bg-bg-surface px-2.5 py-2 text-clr-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-text-muted/40"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                       e.preventDefault();
@@ -615,12 +615,12 @@ export function GitPanel({ open, onClose, workspace }: GitPanelProps) {
                 <button
                   onClick={handleCommit}
                   disabled={committing || !commitMsg.trim() || selectedCount === 0}
-                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[12px] font-medium bg-bg-surface border border-border text-text-secondary hover:text-text hover:bg-bg-hover transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-clr-sm font-medium bg-bg-surface border border-border text-text-secondary hover:text-text hover:bg-bg-hover transition-colors disabled:opacity-40 disabled:pointer-events-none"
                 >
                   {committing ? <Spinner className="w-3 h-3" /> : committed ? <CheckIcon size={12} /> : null}
                   {committed ? "Committed" : selectedCount === allFiles.length ? "Commit all" : `Commit ${selectedCount} file${selectedCount !== 1 ? "s" : ""}`}
                 </button>
-                <p className="text-[10px] text-text-muted/50 text-center">⌘+Enter to commit</p>
+                <p className="text-clr-2xs text-text-muted/50 text-center">⌘+Enter to commit</p>
               </>
             )}
           </div>
@@ -656,17 +656,17 @@ function FileRow({
         }`}
       >
         <button onClick={onToggleCheck} className="shrink-0 w-4 text-center" aria-label={checked ? "Deselect" : "Select"}>
-          <span className={`text-[11px] font-bold transition-colors ${
+          <span className={`text-clr-xs font-bold transition-colors ${
             checked ? "text-text-secondary" : "text-text-muted/30"
           }`}>
             {checked ? "✓" : "–"}
           </span>
         </button>
-        <span className={`shrink-0 w-4 text-center text-[10px] font-mono font-bold ${statusColor(file.status)}`}>
+        <span className={`shrink-0 w-4 text-center text-clr-2xs font-mono font-bold ${statusColor(file.status)}`}>
           {statusLabel(file.status)}
         </span>
         <span
-          className="text-[11px] font-mono min-w-0 flex-1 text-text-secondary group-hover:text-text overflow-hidden text-ellipsis whitespace-nowrap"
+          className="text-clr-xs font-mono min-w-0 flex-1 text-text-secondary group-hover:text-text overflow-hidden text-ellipsis whitespace-nowrap"
           dir="rtl"
         >
           <bdi>{file.file}</bdi>

@@ -62,7 +62,7 @@ export function PwaInstall() {
         install-description="Install CLR for quick access from your home screen"
       />
       {showIosHint && (
-        <div className="fixed bottom-[5.5rem] left-3 right-3 z-30 mx-auto max-w-md rounded-lg border border-border bg-bg-elevated px-3 py-2.5 text-[11px] text-text-muted shadow-lg sm:left-auto safe-bottom">
+        <div className="fixed bottom-[var(--clr-composer-offset)] left-3 right-3 z-30 mx-auto max-w-md rounded-lg border border-border bg-bg-elevated px-4 py-3 text-clr-xs text-text-muted shadow-lg sm:left-auto safe-bottom">
           <div className="flex items-start justify-between gap-2">
             <p>
               <span className="text-text-secondary font-medium">Install on iOS:</span>{" "}
@@ -74,7 +74,7 @@ export function PwaInstall() {
                 localStorage.setItem(IOS_HINT_KEY, "1");
                 setShowIosHint(false);
               }}
-              className="shrink-0 p-1.5 -m-1 rounded-md hover:bg-bg-hover text-text-muted"
+              className="shrink-0 icon-btn hover:bg-bg-hover text-text-muted"
               aria-label="Dismiss install hint"
             >
               <CloseIcon size={12} />
