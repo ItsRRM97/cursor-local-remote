@@ -29,10 +29,21 @@ export function normalizeMarkdown(content: string): string {
   return result;
 }
 
+function needsWordSpace(prev: string, next: string): boolean {
+  const prevChar = prev[prev.length - 1];
+  const nextChar = next[0];
+  return /[A-Za-z0-9)\]]$/.test(prev) && /^[A-Za-z0-9([`]/.test(nextChar);
+}
+
 /** Join transcript text chunks without breaking markdown structure. */
 export function joinMessageContent(prev: string, next: string): string {
   if (!prev) return next;
   if (!next) return prev;
+
+  // stream-json with --stream-partial-output sends cumulative snapshots; replace, do not append.
+  if (next.startsWith(prev)) return next;
+  if (prev.startsWith(next)) return prev;
+
   if (prev.endsWith("\n") || next.startsWith("\n")) return prev + next;
 
   if (/^\s*\|/.test(next) && !/\|\s*$/.test(prev)) {
@@ -41,6 +52,19 @@ export function joinMessageContent(prev: string, next: string): string {
 
   if (/\|\s*$/.test(prev) && /^\s*\|/.test(next)) {
     return `${prev}\n${next}`;
+  }
+
+  const prevTrim = prev.trimEnd();
+  const nextTrim = next.trimStart();
+
+  // Separate assistant segments (jsonl lines between tool calls).
+  if (/[.!?]$/.test(prevTrim) && /^[A-Z]/.test(nextTrim)) {
+    return `${prev}\n\n${next}`;
+  }
+
+  // Delta chunks that omit whitespace between words.
+  if (needsWordSpace(prev, next)) {
+    return `${prev} ${next}`;
   }
 
   return prev + next;
