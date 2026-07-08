@@ -229,8 +229,8 @@ export function ChatContainer({
 
   return (
     <div className="h-full flex flex-col">
-      <header className="shrink-0 flex items-center justify-between header-bar px-2 sm:px-3 border-b border-border">
-        <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+      <header className="shrink-0 flex items-center justify-between header-bar px-2 sm:px-3 border-b border-border gap-1">
+        <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
           <button
             onClick={() => {
               haptics.tap();
@@ -241,14 +241,19 @@ export function ChatContainer({
           >
             <MenuIcon />
           </button>
-          <span className="text-clr-base font-medium text-text-secondary truncate">{dirName}</span>
+          <span
+            className="flex-1 min-w-0 text-clr-header-project font-medium text-text-secondary truncate"
+            title={dirName}
+          >
+            {dirName}
+          </span>
           {gitInfo && (
             <button
               onClick={() => setGitPanelOpen(true)}
-              className="touch-chip text-text-muted bg-bg-surface hover:bg-bg-hover shrink-0"
+              className="touch-chip text-text-muted bg-bg-surface hover:bg-bg-hover shrink-0 max-sm:px-2"
             >
               <GitBranchIcon size={12} />
-              <span className="truncate max-w-[80px]">{gitInfo.branch}</span>
+              <span className="truncate max-w-[80px] hidden sm:inline">{gitInfo.branch}</span>
               {gitInfo.changedFiles > 0 && (
                 <span className="text-warning">+{gitInfo.changedFiles}</span>
               )}
@@ -256,10 +261,11 @@ export function ChatContainer({
           )}
           <button
             onClick={() => setTerminalOpen(true)}
-            className="touch-chip text-text-muted bg-bg-surface hover:bg-bg-hover shrink-0"
+            className="touch-chip text-text-muted bg-bg-surface hover:bg-bg-hover shrink-0 max-sm:px-2"
+            aria-label="Terminal"
           >
             <TerminalIcon size={12} />
-            <span>Terminal</span>
+            <span className="hidden sm:inline">Terminal</span>
             {terminalCount > 0 && (
               <span className="text-success">{terminalCount}</span>
             )}

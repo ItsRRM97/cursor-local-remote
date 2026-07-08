@@ -178,6 +178,22 @@ body {
     min-height: var(--clr-header-h);
   }
 
+  /* Header project label: between pre-bump base (13px) and coarse base (15px) */
+  .text-clr-header-project {
+    font-size: var(--clr-text-base);
+  }
+
+  @media (pointer: coarse) {
+    .text-clr-header-project {
+      font-size: var(--clr-text-sm);
+    }
+  }
+
+  .project-picker-active {
+    border-left: 2px solid var(--color-accent);
+    padding-left: calc(0.75rem - 2px);
+  }
+
   .composer-offset {
     bottom: var(--clr-composer-offset);
   }

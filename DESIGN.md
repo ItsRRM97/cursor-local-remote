@@ -96,6 +96,8 @@ Every screen should feel like a focused ops console: readable at arm's length, n
 | Follow live | `rounded-full`, elevated surface, cyan border tint when streaming |
 | Settings toggles | Green when on (success), not iOS blue |
 | Git panel | Tabular nums for line counts; diff colors unchanged semantically |
+| Header project label | `text-clr-header-project` (14px coarse / 13px fine), `flex-1 min-w-0 truncate`, `title` for full name |
+| Project picker | "Current project" pill with check + accent; starred rows use `project-picker-active`; "Browse all projects" opens full list |
 
 ## Accessibility
 

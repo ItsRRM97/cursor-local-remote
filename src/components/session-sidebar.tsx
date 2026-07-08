@@ -5,7 +5,7 @@ import type { StoredSession, ProjectInfo } from "@/lib/types";
 import { useHaptics } from "@/hooks/use-haptics";
 import { apiFetch } from "@/lib/api-fetch";
 import { timeAgo } from "@/lib/format";
-import { RefreshIcon, CloseIcon, PlusIcon, Spinner, TrashIcon, ChevronDown } from "./icons";
+import { RefreshIcon, CloseIcon, PlusIcon, Spinner, TrashIcon, ChevronDown, CheckIcon } from "./icons";
 
 interface SessionSidebarProps {
   open: boolean;
@@ -358,8 +358,26 @@ export function SessionSidebar({
             New session
           </button>
 
+          <div className="px-1">
+            <p className="text-clr-2xs text-text-muted uppercase tracking-wider px-2 mb-1">
+              Current project
+            </p>
+            <div
+              className="flex items-center gap-2 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] bg-bg-active border border-border"
+              aria-current="true"
+            >
+              <CheckIcon size={14} className="text-accent shrink-0" />
+              <span className="text-clr-sm font-medium text-text truncate flex-1" title={currentProjectName}>
+                {currentProjectName}
+              </span>
+            </div>
+          </div>
+
           {starred.length > 0 && (
             <div className="space-y-px">
+              <p className="text-clr-2xs text-text-muted uppercase tracking-wider px-3 pt-1 pb-0.5">
+                Starred
+              </p>
               {starred.map((path) => {
                 const proj = projects.find((p) => p.path === path);
                 const name = proj?.name || path.split("/").pop() || path;
@@ -369,14 +387,19 @@ export function SessionSidebar({
                   <button
                     key={path}
                     onClick={() => handleProjectSelect(path)}
+                    aria-current={isActive ? "true" : undefined}
                     className={`w-full flex items-center gap-1.5 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] text-clr-sm transition-colors ${
                       isActive
-                        ? "bg-bg-active text-text"
+                        ? "project-picker-active bg-bg-active text-text"
                         : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
                     }`}
                   >
-                    <StarIcon size={10} filled className="shrink-0 text-text-secondary" />
-                    <span className="truncate">{name}</span>
+                    {isActive ? (
+                      <CheckIcon size={12} className="shrink-0 text-accent" />
+                    ) : (
+                      <StarIcon size={10} filled className="shrink-0 text-text-secondary" />
+                    )}
+                    <span className="truncate flex-1 text-left">{name}</span>
                     {termCount > 0 && (
                       <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-success" />
                     )}
@@ -392,10 +415,12 @@ export function SessionSidebar({
                 haptics.tap();
                 setProjectDropdownOpen((v) => !v);
               }}
-              className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] text-clr-sm text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
+              aria-expanded={projectDropdownOpen}
+              aria-haspopup="listbox"
+              className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] text-clr-sm text-text-secondary hover:text-text hover:bg-bg-hover border border-border/60 transition-colors"
             >
-              <span className="truncate">{currentProjectName}</span>
-              <ChevronDown />
+              <span>Browse all projects</span>
+              <ChevronDown className={projectDropdownOpen ? "rotate-180" : ""} />
             </button>
             {projectDropdownOpen && (
               <>
@@ -403,13 +428,16 @@ export function SessionSidebar({
                 <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-bg-elevated border border-border rounded-lg shadow-xl py-1 max-h-60 overflow-y-auto">
                   <button
                     onClick={() => handleProjectSelect("__all__")}
-                    className={`w-full text-left px-3 py-1.5 text-clr-sm transition-colors ${
+                    className={`w-full text-left px-3 py-2.5 min-h-[var(--clr-touch-min)] text-clr-sm transition-colors flex items-center gap-2 ${
                       selectedProject === "__all__"
-                        ? "text-text bg-bg-active"
+                        ? "project-picker-active text-text bg-bg-active"
                         : "text-text-secondary hover:bg-bg-hover hover:text-text"
                     }`}
                   >
-                    All projects
+                    {selectedProject === "__all__" && (
+                      <CheckIcon size={12} className="shrink-0 text-accent" />
+                    )}
+                    <span>All projects</span>
                   </button>
                   <div className="h-px bg-border mx-2 my-1" />
                   {projects.map((p) => {
@@ -418,12 +446,15 @@ export function SessionSidebar({
                       <button
                         key={p.key}
                         onClick={() => handleProjectSelect(p.path)}
-                        className={`w-full text-left px-3 py-1.5 text-clr-sm transition-colors flex items-center gap-2 ${
+                        className={`w-full text-left px-3 py-2.5 min-h-[var(--clr-touch-min)] text-clr-sm transition-colors flex items-center gap-2 ${
                           selectedProject === p.path
-                            ? "text-text bg-bg-active"
+                            ? "project-picker-active text-text bg-bg-active"
                             : "text-text-secondary hover:bg-bg-hover hover:text-text"
                         }`}
                       >
+                        {selectedProject === p.path && (
+                          <CheckIcon size={12} className="shrink-0 text-accent" />
+                        )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             <span className="truncate">{p.name}</span>
@@ -512,12 +543,12 @@ export function SessionSidebar({
                           : "hover:bg-bg-hover text-text-secondary"
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 flex-1 min-w-0 pr-12">
+                      <div className="flex items-start justify-between gap-2 pr-10 sm:pr-12">
+                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
                           {status && <StatusIndicator status={status} />}
                           <p className="text-clr-sm truncate">{s.title}</p>
                         </div>
-                        <span className="text-clr-2xs text-text-muted shrink-0">
+                        <span className="text-clr-2xs text-text-muted shrink-0 tabular-nums whitespace-nowrap pt-0.5">
                           {timeAgo(s.updatedAt)}
                         </span>
                       </div>
