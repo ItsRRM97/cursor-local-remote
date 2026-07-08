@@ -86,6 +86,39 @@ function normalizeMergeKey(text: string): string {
   return text.replace(/\n+/g, "\n").trim();
 }
 
+function shouldReplaceWithNewSegment(prev: string, next: string): boolean {
+  if (!prev || !next) return false;
+  if (next.startsWith(prev) || prev.startsWith(next)) return false;
+
+  const prevKey = normalizeMergeKey(prev);
+  const nextKey = normalizeMergeKey(next);
+  if (prevKey && nextKey.startsWith(prevKey)) return false;
+  if (nextKey && prevKey.startsWith(nextKey)) return false;
+  if (isPlausibleStreamingSnapshot(prevKey, nextKey)) return false;
+
+  const prefixLen = commonPrefixLength(prevKey, nextKey);
+  const minLen = Math.min(prevKey.length, nextKey.length);
+  if (minLen === 0) return false;
+
+  // Cursor transcripts often emit a short status line, then a separate full answer.
+  // Those are not streaming deltas; keep only the latest disjoint segment.
+  if (prefixLen < 40 && prefixLen < minLen * 0.2) {
+    // Tiny chunks are usually mid-token stream deltas; let overlap merge handle them.
+    if (prev.length < 60 && next.length < 60) return false;
+    return next.length >= 80 || next.length >= prev.length * 1.5;
+  }
+
+  return false;
+}
+
+/** Merge assistant transcript chunks (stream deltas and jsonl segments). */
+export function mergeAssistantChunks(prev: string, next: string): string {
+  if (!prev) return next;
+  if (!next) return prev;
+  if (shouldReplaceWithNewSegment(prev, next)) return next;
+  return joinMessageContent(prev, next);
+}
+
 /** Join transcript text chunks without breaking markdown structure. */
 export function joinMessageContent(prev: string, next: string): string {
   if (!prev) return next;

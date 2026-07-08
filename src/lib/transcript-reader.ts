@@ -3,7 +3,7 @@ import { join, resolve, sep } from "path";
 import { homedir } from "os";
 import { existsSync, statSync } from "fs";
 import type { StoredSession, ChatMessage, ToolCallInfo, TodoItem, ProjectInfo } from "@/lib/types";
-import { joinMessageContent } from "@/lib/markdown-normalize";
+import { mergeAssistantChunks, joinMessageContent } from "@/lib/markdown-normalize";
 import { formatSessionTitle, stripSessionMetadata } from "@/lib/format";
 import { vlog } from "@/lib/verbose";
 
@@ -393,7 +393,7 @@ export function parseLiveEvents(
   const baseTimestamp = Date.now() - 60_000;
 
   for (const event of events) {
-    const role = event.type as string;
+    const role = (event.role ?? event.type) as string;
     if (role !== "user" && role !== "assistant") continue;
 
     const contentArr = (event.message as Record<string, unknown> | undefined)?.content;
@@ -416,7 +416,11 @@ export function parseLiveEvents(
     if (text.trim()) {
       const prev = messages[messages.length - 1];
       if (prev && prev.role === role) {
-        prev.content = sanitizeAssistantText(joinMessageContent(prev.content, text));
+        const merged =
+          role === "assistant"
+            ? sanitizeAssistantText(mergeAssistantChunks(prev.content, text))
+            : joinMessageContent(prev.content, text);
+        prev.content = merged;
       } else {
         messages.push({
           id: `${sessionId}-live-${counter.n++}`,
@@ -463,7 +467,7 @@ export async function readSessionMessages(workspace: string, sessionId: string):
   let skippedEntries = 0;
 
   for (const entry of entries) {
-    const role = entry.role as string;
+    const role = (entry.role ?? entry.type) as string;
     if (role !== "user" && role !== "assistant") {
       skippedEntries++;
       continue;
@@ -492,7 +496,11 @@ export async function readSessionMessages(workspace: string, sessionId: string):
     if (text.trim()) {
       const prev = messages[messages.length - 1];
       if (prev && prev.role === role) {
-        prev.content = sanitizeAssistantText(joinMessageContent(prev.content, text));
+        const merged =
+          role === "assistant"
+            ? sanitizeAssistantText(mergeAssistantChunks(prev.content, text))
+            : joinMessageContent(prev.content, text);
+        prev.content = merged;
       } else {
         messages.push({
           id: `${sessionId}-${counter.n++}`,
