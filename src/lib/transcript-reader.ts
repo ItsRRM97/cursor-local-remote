@@ -172,9 +172,7 @@ function stripXmlTags(text: string): string {
 /** Cursor transcripts redact internal reasoning as literal `[REDACTED]` text blocks. */
 export function sanitizeAssistantText(text: string): string {
   return text
-    .replace(/\n*\[REDACTED\]\n*/g, "\n")
-    .replace(/^\[REDACTED\]\s*/g, "")
-    .replace(/\s*\[REDACTED\]$/g, "")
+    .replace(/\[REDACTED\]/g, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }

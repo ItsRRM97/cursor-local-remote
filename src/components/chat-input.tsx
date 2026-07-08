@@ -231,16 +231,6 @@ export function ChatInput({
                   {mode.label}
                 </button>
               ))}
-
-              {isCoarsePointer ? (
-                <span className="text-clr-2xs text-text-muted/50 ml-1 select-none truncate">
-                  ↵ newline · ↑ send
-                </span>
-              ) : (
-                <span className="hidden sm:inline text-clr-2xs text-text-muted/50 ml-2 select-none">
-                  Enter ↵ send · Shift+Enter newline
-                </span>
-              )}
             </div>
 
             <div className="flex items-center gap-1.5">
