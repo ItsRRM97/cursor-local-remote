@@ -179,6 +179,7 @@ curl -sS -X POST https://clr.rawshn.com/api/chat \
 ### Manage CLR
 
 ```bash
+cd ~/Projects/cursor-local-remote && npm run build   # after UI/code changes
 ~/bin/clr-service-install.sh status
 ~/bin/clr-service-install.sh restart
 launchctl kickstart -k gui/$(id -u)/com.rawshn.cursor-local-remote
@@ -285,6 +286,7 @@ chmod 600 ~/.cursor-local-remote/cloudflare-api-token
 | Composio Cloudflare MCP fails | Reconnect with API Token permissions |
 | Old token (`wagon-kiosk`) | Use current token from `auth-token.json` |
 | Chat forces scroll to bottom while agent runs | Update CLR. Scroll up to read history; tap **Follow live** to resume. See [docs/USER_GUIDE.md](../docs/USER_GUIDE.md) |
+| Enter sends message instead of newline on phone | Update CLR. Touch devices: Enter = newline, tap **↑** to send. Desktop: Enter = send, Shift+Enter = newline. |
 | `[REDACTED]` text in messages | Update CLR (transcript sanitizer). Empty tool-only turns no longer show placeholder text. |
 
 ---

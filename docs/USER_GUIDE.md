@@ -30,6 +30,15 @@ Auto-scroll only runs when you are already at the bottom of the thread.
 | **+ (while streaming)** | Queues your message for after the current turn. |
 | **Send now** (queued card) | Stops current run and sends that message immediately. |
 
+## Composer (typing)
+
+| Device | Enter key | Send |
+|--------|-----------|------|
+| **Phone / tablet** | New line (paragraph break) | Tap the **↑** button |
+| **Desktop keyboard** | Send message | **Shift+Enter** for a new line |
+
+On touch devices the hint below the mode pills shows `↵ newline · ↑ send`.
+
 ## Sessions and projects
 
 - **Sidebar (☰)** — switch projects, open past sessions, start a new chat.
@@ -61,6 +70,7 @@ Requires HTTPS for remote access.
 | Problem | What to do |
 |---------|------------|
 | Chat jumps to bottom while reading | Update CLR (scroll pin fix). Scroll up; use **Follow live** only when you want to catch up. |
+| Enter sends instead of newline on phone | Update CLR. On touch devices, Enter adds a line; tap **↑** to send. |
 | `[REDACTED]` in old messages | Update CLR; transcripts strip Cursor redaction placeholders. Reload session. |
 | MCP / Notion not working | Enable **Workspace trust**. Pick a project that has MCP logged in on the Mac (e.g. `~/Projects/cursor-local-remote`). |
 | 401 on remote URL | Add `?token=` from `auth-token.json` or complete Cloudflare Access login. |

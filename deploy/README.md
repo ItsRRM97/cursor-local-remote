@@ -51,7 +51,17 @@ Current token: `~/.cursor-local-remote/auth-token.json` (field `token`).
 
 See **[deploy/API.md](./API.md)** for endpoints, auth layers, launchd labels, setup commands, and troubleshooting.
 
-**User guide:** [docs/USER_GUIDE.md](./docs/USER_GUIDE.md) (scroll while streaming, queue, PWA, notifications).
+**User guide:** [docs/USER_GUIDE.md](./docs/USER_GUIDE.md) (scroll while streaming, queue, PWA, composer Enter key).
+
+## Apply code changes
+
+After editing the repo on the Mac:
+
+```bash
+cd ~/Projects/cursor-local-remote
+npm run build
+~/bin/clr-service-install.sh restart
+```
 
 ## Mac sleep
 

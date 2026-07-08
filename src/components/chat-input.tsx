@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { AgentMode, ModelInfo } from "@/lib/types";
+import { useCoarsePointer } from "@/hooks/use-coarse-pointer";
 import { useHaptics } from "@/hooks/use-haptics";
 import { apiFetch } from "@/lib/api-fetch";
 import { ChevronDown, Spinner, StopIcon, PlusIcon, ArrowUp, CloseIcon } from "./icons";
@@ -44,6 +45,7 @@ export function ChatInput({
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isCoarsePointer = useCoarsePointer();
   const haptics = useHaptics();
 
   useEffect(() => {
@@ -121,7 +123,8 @@ export function ChatInput({
   }, [onStop, haptics]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    // Desktop: Enter sends, Shift+Enter newline. Touch: Enter newline, send via button.
+    if (e.key === "Enter" && !e.shiftKey && !isCoarsePointer) {
       e.preventDefault();
       handleSend();
     }
@@ -229,9 +232,15 @@ export function ChatInput({
                 </button>
               ))}
 
-              <span className="hidden sm:inline text-clr-2xs text-text-muted/50 ml-2 select-none">
-                Enter ↵ send · Shift+Enter newline
-              </span>
+              {isCoarsePointer ? (
+                <span className="text-clr-2xs text-text-muted/50 ml-1 select-none truncate">
+                  ↵ newline · ↑ send
+                </span>
+              ) : (
+                <span className="hidden sm:inline text-clr-2xs text-text-muted/50 ml-2 select-none">
+                  Enter ↵ send · Shift+Enter newline
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-1.5">

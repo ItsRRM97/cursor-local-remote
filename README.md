@@ -186,21 +186,32 @@ Day-to-day usage (scroll while streaming, queue, PWA, notifications): **[docs/US
 | Issue | Fix |
 |-------|-----|
 | Can't scroll up during agent run | Update to latest CLR. Scroll up freely; tap **Follow live** to resume auto-scroll. |
+| Enter sends instead of newline on phone | Update CLR. On touch devices, Enter adds a line; tap **↑** to send. |
 | `[REDACTED]` in chat history | Update CLR (strips Cursor transcript placeholders). Reload the session. |
 | MCP tools fail over remote | Settings → enable **Workspace trust**. Select a project with MCP auth on the Mac. |
 | 401 / auth errors | Use `?token=` from terminal or `~/.cursor-local-remote/auth-token.json`. |
+| UI changes not visible on clr.rawshn.com | Run `npm run build` in repo, then `~/bin/clr-service-install.sh restart`. |
 
 More: [deploy/API.md](./deploy/API.md#troubleshooting) and [docs/USER_GUIDE.md](./docs/USER_GUIDE.md).
 
 ## Development
 
-Contributions are welcome! Mainly created this so I can use Cursor when I don't feel like being at my desk. The whole project was vibecoded with Cursor, obviously. Run `npm run dev` to start the dev server.
+Contributions are welcome! Mainly created this so I can use Cursor when I don't feel like being at my desk. The whole project was vibecoded with Cursor, obviously.
 
 ```bash
 git clone https://github.com/ItsRRM97/cursor-local-remote.git
 cd cursor-local-remote
 npm install
 npm run dev
+```
+
+**Agent-oriented docs:** [CLAUDE.md](./CLAUDE.md) (key paths, deploy, mobile UX). **User guide:** [docs/USER_GUIDE.md](./docs/USER_GUIDE.md). **Remote deploy:** [deploy/README.md](./deploy/README.md), [deploy/API.md](./deploy/API.md).
+
+**Deploy local changes to clr.rawshn.com:**
+
+```bash
+npm run build
+~/bin/clr-service-install.sh restart
 ```
 
 Upstream: [jon-makinen/cursor-local-remote](https://github.com/jon-makinen/cursor-local-remote).

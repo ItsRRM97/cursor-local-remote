@@ -32,7 +32,7 @@ export function normalizeMarkdown(content: string): string {
 function needsWordSpace(prev: string, next: string): boolean {
   const prevChar = prev[prev.length - 1];
   const nextChar = next[0];
-  return /[A-Za-z0-9)\]]$/.test(prev) && /^[A-Za-z0-9([`]/.test(nextChar);
+  return /[A-Za-z0-9)\]]$/.test(prevChar) && /^[A-Za-z0-9([`]/.test(nextChar);
 }
 
 /** Join transcript text chunks without breaking markdown structure. */
