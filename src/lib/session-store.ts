@@ -3,6 +3,7 @@ import { join } from "path";
 import { homedir } from "os";
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "fs";
 import type { StoredSession } from "@/lib/types";
+import { formatSessionTitle, stripSessionMetadata } from "@/lib/format";
 
 const DATA_DIR = join(homedir(), ".cursor-local-remote");
 const DB_PATH = join(DATA_DIR, "sessions.db");
@@ -114,15 +115,17 @@ export async function upsertSession(
   const now = Date.now();
   const existing = queryOne(conn, "SELECT * FROM sessions WHERE id = ?", [sessionId]);
 
+  const cleaned = stripSessionMetadata(firstMessage);
+
   if (existing) {
-    const preview = firstMessage ? firstMessage.slice(0, 120) : (existing.preview as string);
+    const preview = cleaned ? cleaned.slice(0, 120) : (existing.preview as string);
     conn.run("UPDATE sessions SET updated_at = ?, preview = ? WHERE id = ?", [now, preview, sessionId]);
     save();
     return rowToSession({ ...existing, updated_at: now, preview });
   }
 
-  const title = firstMessage.slice(0, 60) || "New session";
-  const preview = firstMessage.slice(0, 120);
+  const preview = cleaned.slice(0, 120);
+  const title = formatSessionTitle({ title: cleaned, preview, updatedAt: now });
   conn.run(
     "INSERT INTO sessions (id, title, workspace, preview, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
     [sessionId, title, workspace, preview, now, now],

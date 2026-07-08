@@ -4,6 +4,7 @@ import { homedir } from "os";
 import { existsSync, statSync } from "fs";
 import type { StoredSession, ChatMessage, ToolCallInfo, TodoItem, ProjectInfo } from "@/lib/types";
 import { joinMessageContent } from "@/lib/markdown-normalize";
+import { formatSessionTitle, stripSessionMetadata } from "@/lib/format";
 import { vlog } from "@/lib/verbose";
 
 const CURSOR_PROJECTS_DIR = join(homedir(), ".cursor", "projects");
@@ -84,15 +85,14 @@ async function parseJsonlEntries(jsonlPath: string): Promise<Record<string, unkn
 
 async function extractFirstUserMessage(jsonlPath: string): Promise<string> {
   for (const entry of await parseJsonlEntries(jsonlPath)) {
-    if (entry.role === "user") {
-      const msg = entry.message as Record<string, unknown> | undefined;
-      const content = msg?.content as Array<Record<string, unknown>> | undefined;
-      const text: string = (content?.[0]?.text as string) || "";
-      return text
-        .replace(/<[^>]+>/g, "")
-        .trim()
-        .slice(0, 120);
-    }
+    const role = (entry.role ?? entry.type) as string;
+    if (role !== "user") continue;
+
+    const msg = entry.message as Record<string, unknown> | undefined;
+    const content = msg?.content as Array<Record<string, unknown>> | undefined;
+    const text: string = (content?.[0]?.text as string) || "";
+    const cleaned = stripSessionMetadata(text);
+    if (cleaned) return cleaned.slice(0, 120);
   }
   return "";
 }
@@ -145,14 +145,15 @@ export async function readCursorSessions(workspace: string): Promise<StoredSessi
       const s = await stat(jsonl);
       const sessionId = entry.replace(".jsonl", "");
       const preview = await extractFirstUserMessage(jsonl);
+      const title = formatSessionTitle({ title: preview, preview, updatedAt: s.mtimeMs });
 
-      if (!preview) continue;
+      if (!preview && title === "New session") continue;
 
       sessions.push({
         id: sessionId,
-        title: preview.slice(0, 60),
+        title,
         workspace,
-        preview,
+        preview: preview || title,
         createdAt: s.birthtimeMs,
         updatedAt: s.mtimeMs,
       });
@@ -165,11 +166,7 @@ export async function readCursorSessions(workspace: string): Promise<StoredSessi
 }
 
 function stripXmlTags(text: string): string {
-  return text
-    .replace(/<user_query>\n?/g, "")
-    .replace(/<\/user_query>\n?/g, "")
-    .replace(/<[^>]+>/g, "")
-    .trim();
+  return stripSessionMetadata(text);
 }
 
 /** Cursor transcripts redact internal reasoning as literal `[REDACTED]` text blocks. */

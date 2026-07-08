@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import type { StoredSession, ProjectInfo } from "@/lib/types";
 import { useHaptics } from "@/hooks/use-haptics";
 import { apiFetch } from "@/lib/api-fetch";
-import { timeAgo } from "@/lib/format";
+import { timeAgo, formatSessionTitle } from "@/lib/format";
 import { RefreshIcon, CloseIcon, PlusIcon, Spinner, TrashIcon, ChevronDown, CheckIcon } from "./icons";
 
 interface SessionSidebarProps {
@@ -132,7 +132,7 @@ function SessionTooltip({ session, children }: { session: StoredSession; childre
           style={{ left: pos.x, top: pos.y }}
         >
           <div className="relative -translate-x-1/2 -translate-y-full -mt-1.5 max-w-[240px] px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] bg-bg-elevated border border-border shadow-lg">
-            <p className="text-clr-xs text-text leading-snug break-words">{session.title}</p>
+            <p className="text-clr-xs text-text leading-snug break-words">{formatSessionTitle(session)}</p>
             {session.preview && session.preview !== session.title && (
               <p className="text-clr-2xs text-text-muted mt-0.5 leading-snug break-words line-clamp-3">{session.preview}</p>
             )}
@@ -546,7 +546,7 @@ export function SessionSidebar({
                       <div className="flex items-start justify-between gap-2 pr-10 sm:pr-12">
                         <div className="flex items-center gap-1.5 flex-1 min-w-0">
                           {status && <StatusIndicator status={status} />}
-                          <p className="text-clr-sm truncate">{s.title}</p>
+                          <p className="text-clr-sm truncate">{formatSessionTitle(s)}</p>
                         </div>
                         <span className="text-clr-2xs text-text-muted shrink-0 tabular-nums whitespace-nowrap pt-0.5">
                           {timeAgo(s.updatedAt)}
