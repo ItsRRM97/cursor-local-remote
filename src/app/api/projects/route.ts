@@ -2,7 +2,7 @@ import { sep } from "path";
 import { listProjects } from "@/lib/transcript-reader";
 import { listWorkspaces } from "@/lib/session-store";
 import { getWorkspace } from "@/lib/workspace";
-import { resolveAgentWorkspace } from "@/lib/mcp-workspace";
+import { listFilesystemProjects, resolveAgentWorkspace } from "@/lib/mcp-workspace";
 import { serverError } from "@/lib/errors";
 import type { ProjectInfo } from "@/lib/types";
 
@@ -10,9 +10,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const [transcriptProjects, dbWorkspaces] = await Promise.all([
+    const [transcriptProjects, dbWorkspaces, filesystemProjects] = await Promise.all([
       listProjects(),
       listWorkspaces(),
+      listFilesystemProjects(),
     ]);
     const currentWorkspace = getWorkspace();
     const mcpWorkspace = await resolveAgentWorkspace(currentWorkspace);
@@ -25,6 +26,9 @@ export async function GET() {
       if (byPath.has(ws)) continue;
       const name = ws.split(sep).pop() || ws;
       byPath.set(ws, { name, path: ws, key: ws });
+    }
+    for (const p of filesystemProjects) {
+      if (!byPath.has(p.path)) byPath.set(p.path, p);
     }
     if (!byPath.has(currentWorkspace)) {
       const name = currentWorkspace.split(sep).pop() || currentWorkspace;

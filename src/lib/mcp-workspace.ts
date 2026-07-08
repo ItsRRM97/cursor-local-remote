@@ -3,6 +3,7 @@ import { join, resolve } from "path";
 import { homedir } from "os";
 import { existsSync } from "fs";
 import { workspaceToProjectKey } from "@/lib/transcript-reader";
+import type { ProjectInfo } from "@/lib/types";
 
 const PROJECTS_DIR = join(homedir(), "Projects");
 const CLR_REPO = join(PROJECTS_DIR, "cursor-local-remote");
@@ -90,6 +91,26 @@ export async function resolveAgentWorkspace(requested?: string): Promise<string>
   }
 
   return best;
+}
+
+/** Every top-level folder under ~/Projects, for the sidebar project picker. */
+export async function listFilesystemProjects(): Promise<ProjectInfo[]> {
+  const projects: ProjectInfo[] = [];
+  try {
+    const entries = await readdir(PROJECTS_DIR, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+      const path = resolve(join(PROJECTS_DIR, entry.name));
+      projects.push({
+        name: entry.name,
+        path,
+        key: workspaceToProjectKey(path),
+      });
+    }
+  } catch {
+    // Projects dir missing or unreadable
+  }
+  return projects.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export { PROJECTS_DIR, CLR_REPO };
