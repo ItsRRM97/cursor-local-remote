@@ -41,17 +41,21 @@ export function useSessionWatch(options: UseSessionWatchOptions = {}) {
     setIsWatching(false);
   }, []);
 
+  const normalizeUserText = (text: string) => text.replace(/\s+/g, " ").trim();
+
   const mergeMessages = useCallback((incoming: ChatMessage[]) => {
     setMessages((prev) => {
       const incomingIds = new Set(incoming.map((m) => m.id));
       const incomingUserTexts = new Set(
-        incoming.filter((m) => m.role === "user").map((m) => m.content.trim()),
+        incoming
+          .filter((m) => m.role === "user")
+          .map((m) => normalizeUserText(m.content)),
       );
       const optimistic = prev.filter(
         (m) =>
           m.role === "user" &&
           !incomingIds.has(m.id) &&
-          !incomingUserTexts.has(m.content.trim()),
+          !incomingUserTexts.has(normalizeUserText(m.content)),
       );
       vlog("watch-client", "mergeMessages", { incoming: incoming.length, prev: prev.length, optimistic: optimistic.length });
       if (optimistic.length === 0) return incoming;

@@ -86,6 +86,43 @@ function normalizeMergeKey(text: string): string {
   return text.replace(/\n+/g, "\n").trim();
 }
 
+/** Letters and digits only, for matching collapsed stream deltas to spaced snapshots. */
+function alnumKey(text: string): string {
+  return text.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+}
+
+function trailingLineStart(prev: string): number {
+  if (!prev) return 0;
+  const scanFrom = prev.endsWith("\n") ? prev.length - 2 : prev.length - 1;
+  const lastNl = prev.lastIndexOf("\n", scanFrom);
+  return lastNl < 0 ? 0 : lastNl + 1;
+}
+
+/**
+ * stream-json --stream-partial-output sometimes emits a properly spaced rewrite of
+ * the active line after token deltas glued words together ("Searchingthe..." ->
+ * "Searching the..."). Treat that as a line snapshot, not a new segment.
+ */
+function isReformattedLineSnapshot(prev: string, next: string): boolean {
+  if (!prev || next.length < 20) return false;
+
+  const nextKey = alnumKey(next);
+  if (nextKey.length < 12) return false;
+
+  const trailingKey = alnumKey(prev.slice(trailingLineStart(prev)));
+  if (trailingKey.length >= 12 && trailingKey === nextKey) return true;
+
+  if (!prev.includes("\n") && alnumKey(prev) === nextKey) return true;
+
+  return false;
+}
+
+function replaceReformattedLineSnapshot(prev: string, next: string): string {
+  const start = trailingLineStart(prev);
+  if (start === 0) return next;
+  return prev.slice(0, start) + next;
+}
+
 function shouldReplaceWithNewSegment(prev: string, next: string): boolean {
   if (!prev || !next) return false;
   if (next.startsWith(prev) || prev.startsWith(next)) return false;
@@ -140,6 +177,10 @@ export function joinMessageContent(prev: string, next: string): string {
   // Sanitization/redaction can break strict prefix checks; prefer the newer longer snapshot.
   if (isPlausibleStreamingSnapshot(prevKey, nextKey)) {
     return next.length >= prev.length ? next : prev;
+  }
+
+  if (isReformattedLineSnapshot(prev, next)) {
+    return replaceReformattedLineSnapshot(prev, next);
   }
 
   const overlap = mergeWithSuffixPrefixOverlap(prev, next);
