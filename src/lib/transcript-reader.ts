@@ -5,6 +5,7 @@ import { existsSync, statSync } from "fs";
 import type { StoredSession, ChatMessage, ToolCallInfo, TodoItem, ProjectInfo } from "@/lib/types";
 import { mergeAssistantChunks, joinMessageContent } from "@/lib/markdown-normalize";
 import { formatSessionTitle, stripSessionMetadata } from "@/lib/format";
+import { workspaceDisplayName } from "@/lib/workspace";
 import { vlog } from "@/lib/verbose";
 
 const CURSOR_PROJECTS_DIR = join(homedir(), ".cursor", "projects");
@@ -43,8 +44,7 @@ export async function listProjects(): Promise<ProjectInfo[]> {
       }
       const workspace = projectKeyToWorkspace(entry);
       if (!workspace) continue;
-      const name = workspace.split(sep).pop() || workspace;
-      projects.push({ name, path: workspace, key: entry });
+      projects.push({ name: workspaceDisplayName(workspace), path: workspace, key: entry });
     }
   } catch {
     // projects dir doesn't exist or can't be read

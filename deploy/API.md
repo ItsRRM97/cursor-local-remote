@@ -281,7 +281,7 @@ chmod 600 ~/.cursor-local-remote/cloudflare-api-token
 | Tunnel down | `launchctl kickstart -k gui/$(id -u)/com.rawshn.clr-cloudflared` |
 | Agent stops mid-task | Mac slept — disable system sleep on AC |
 | macOS file access popup | Grant access to **CLR Server** (`~/.cursor-local-remote/bin/clr-server`), not generic node |
-| MCP tools fail silently over CLR | Enable **Workspace trust** in Settings (`--force` for headless MCP). Default workspace must have an MCP catalog: `~/Projects` works; bare `~` does not. CLR auto-falls back to `~/Projects` when the selected workspace has no MCP tools. |
+| MCP tools fail silently over CLR | Enable **Workspace trust** in Settings (`--force` for headless MCP). Default workspace is Home (`~`). CLR only falls back to another root (e.g. `cursor-local-remote`) when the selected workspace has no MCP tools. |
 | Agent uses Grep/Read instead of notion-search | Workspace lacks MCP OAuth. Use **cursor-local-remote** project (has Notion token) or run `agent mcp login notion` once in that project folder on the Mac. CLR auto-picks the best authenticated workspace. |
 | Composio Cloudflare MCP fails | Reconnect with API Token permissions |
 | Old token (`wagon-kiosk`) | Use current token from `auth-token.json` |

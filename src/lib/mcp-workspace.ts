@@ -3,6 +3,7 @@ import { join, resolve } from "path";
 import { homedir } from "os";
 import { existsSync } from "fs";
 import { workspaceToProjectKey } from "@/lib/transcript-reader";
+import { workspaceDisplayName } from "@/lib/workspace";
 import type { ProjectInfo } from "@/lib/types";
 
 const PROJECTS_DIR = join(homedir(), "Projects");
@@ -66,21 +67,27 @@ const FALLBACK_CANDIDATES = [
 ];
 
 /**
- * Pick a workspace root where the Cursor agent CLI can load and authenticate MCP servers.
- * Bare ~/Projects often has tool catalogs but no OAuth tokens; cursor-local-remote usually has both.
+ * Pick a workspace root where the Cursor agent CLI can load MCP servers.
+ * Respects the requested workspace when it already has an MCP catalog.
+ * Only falls back (e.g. to cursor-local-remote for OAuth tokens) when the
+ * requested root has no MCP tools.
  */
 export async function resolveAgentWorkspace(requested?: string): Promise<string> {
   const raw = requested?.trim() || process.env.CURSOR_WORKSPACE?.trim();
   const workspace = raw ? resolve(raw) : resolve(process.cwd());
 
-  const candidates = new Set<string>([workspace]);
+  if ((await mcpScore(workspace)) > 0) {
+    return workspace;
+  }
+
+  const candidates = new Set<string>();
   for (const pick of FALLBACK_CANDIDATES) {
     const candidate = pick();
     if (candidate) candidates.add(resolve(candidate));
   }
 
   let best = workspace;
-  let bestScore = await mcpScore(workspace);
+  let bestScore = 0;
 
   for (const candidate of candidates) {
     const score = await mcpScore(candidate);
@@ -102,7 +109,7 @@ export async function listFilesystemProjects(): Promise<ProjectInfo[]> {
       if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
       const path = resolve(join(PROJECTS_DIR, entry.name));
       projects.push({
-        name: entry.name,
+        name: workspaceDisplayName(path),
         path,
         key: workspaceToProjectKey(path),
       });

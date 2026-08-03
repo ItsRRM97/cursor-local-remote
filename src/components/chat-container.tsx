@@ -8,6 +8,7 @@ import { useNotification } from "@/hooks/use-notification";
 import { apiFetch } from "@/lib/api-fetch";
 import { vlog } from "@/lib/verbose";
 import type { StoredSession } from "@/lib/types";
+import { workspaceDisplayName } from "@/lib/workspace-name";
 import { MessageList } from "./message-list";
 import { ChatInput } from "./chat-input";
 import { exportSessionMarkdown } from "@/lib/export";
@@ -97,7 +98,7 @@ export function ChatContainer({
     apiFetch("/api/info")
       .then((r) => r.json())
       .then((data) => {
-        const ws = data.mcpWorkspace || data.workspace || "";
+        const ws = data.workspace || "";
         setWorkspace(ws);
       })
       .catch((err) => console.error("[workspace] Failed to fetch:", err));
@@ -220,7 +221,7 @@ export function ChatContainer({
     return () => clearInterval(id);
   }, [workspace]);
 
-  const dirName = workspace.split("/").filter(Boolean).pop() || "~";
+  const dirName = workspaceDisplayName(workspace);
   const elapsedLabel = elapsed >= 60
     ? `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`
     : `${elapsed}s`;

@@ -5,6 +5,7 @@ import type { StoredSession, ProjectInfo } from "@/lib/types";
 import { useHaptics } from "@/hooks/use-haptics";
 import { apiFetch } from "@/lib/api-fetch";
 import { timeAgo, formatSessionTitle } from "@/lib/format";
+import { workspaceDisplayName } from "@/lib/workspace-name";
 import { RefreshIcon, CloseIcon, PlusIcon, Spinner, TrashIcon, ChevronDown, CheckIcon } from "./icons";
 
 interface SessionSidebarProps {
@@ -68,7 +69,7 @@ function UnarchiveIcon({ size = 12, className = "" }: { size?: number; className
   );
 }
 
-const PROJECT_STORAGE_KEY = "clr-selected-project";
+const PROJECT_STORAGE_KEY = "clr-selected-project-v2";
 const STARRED_STORAGE_KEY = "clr-starred-projects"; // localStorage fallback key
 
 function StarIcon({ size = 12, filled = false, className = "" }: { size?: number; filled?: boolean; className?: string }) {
@@ -205,10 +206,9 @@ export function SessionSidebar({
       .then((data) => {
         setProjects(data.projects || []);
         if (selectedProject) return;
-        const preferred = data.mcpWorkspace || data.currentWorkspace;
+        const preferred = data.currentWorkspace;
         if (preferred) {
           setSelectedProject(preferred);
-          localStorage.setItem(PROJECT_STORAGE_KEY, preferred);
           onWorkspaceChange?.(preferred);
         }
       })
@@ -306,7 +306,7 @@ export function SessionSidebar({
   const currentProjectName = selectedProject === "__all__"
     ? "All projects"
     : projects.find((p) => p.path === selectedProject)?.name
-      || selectedProject?.split("/").pop()
+      || (selectedProject ? workspaceDisplayName(selectedProject) : null)
       || "Current project";
 
   return (
@@ -380,7 +380,7 @@ export function SessionSidebar({
               </p>
               {starred.map((path) => {
                 const proj = projects.find((p) => p.path === path);
-                const name = proj?.name || path.split("/").pop() || path;
+                const name = proj?.name || workspaceDisplayName(path);
                 const isActive = selectedProject === path;
                 const termCount = workspaceTerminals[path] || 0;
                 return (
@@ -554,7 +554,7 @@ export function SessionSidebar({
                       </div>
                       {selectedProject === "__all__" && (
                         <p className="text-clr-2xs text-text-muted mt-0.5 font-mono truncate">
-                          {s.workspace.split("/").pop()}
+                          {workspaceDisplayName(s.workspace)}
                         </p>
                       )}
                     </button>

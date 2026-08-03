@@ -6,6 +6,7 @@ import type { FitAddon } from "@xterm/addon-fit";
 import type { WebLinksAddon } from "@xterm/addon-web-links";
 import "@xterm/xterm/css/xterm.css";
 import { apiFetch } from "@/lib/api-fetch";
+import { workspaceDisplayName } from "@/lib/workspace-name";
 import { useHaptics } from "@/hooks/use-haptics";
 import { CloseIcon, PlusIcon, Spinner, StopIcon, TrashIcon } from "./icons";
 
@@ -47,7 +48,7 @@ const XTERM_THEME = {
 };
 
 function cwdLabel(cwd: string): string {
-  return cwd.split("/").filter(Boolean).pop() || "~";
+  return workspaceDisplayName(cwd);
 }
 
 export function TerminalPanel({ open, onClose, workspace, onCountChange }: TerminalPanelProps) {

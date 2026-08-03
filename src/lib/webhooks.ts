@@ -1,6 +1,7 @@
 import { getConfig, getSessionTitle } from "@/lib/session-store";
 import { readSessionMessages } from "@/lib/transcript-reader";
 import { getPublicBaseUrl } from "@/lib/public-url";
+import { workspaceDisplayName } from "@/lib/workspace";
 import type { TodoItem } from "@/lib/types";
 
 export async function getWebhookUrl(): Promise<string> {
@@ -132,7 +133,7 @@ export async function notifyAgentComplete(sessionId: string, workspace: string):
     const url = await getWebhookUrl();
     if (!url) return;
 
-    const project = workspace.split("/").filter(Boolean).pop() || workspace;
+    const project = workspaceDisplayName(workspace);
     const prompt = await getSessionTitle(sessionId);
     const todos = await getLatestTodos(workspace, sessionId);
 
