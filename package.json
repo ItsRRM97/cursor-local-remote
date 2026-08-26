@@ -2,7 +2,7 @@
   "name": "cursor-local-remote",
   "version": "0.1.15",
   "type": "module",
-  "description": "Control Cursor IDE from any device on your local network",
+  "description": "Cursor Local Remote for MacBook — control Cursor CLI from phone or browser on your Mac",
   "license": "MIT",
   "repository": {
     "type": "git",
