@@ -2,8 +2,8 @@
 # Install launchd job to rotate CLR token every 90 days (+ check on boot).
 set -euo pipefail
 
-LABEL="com.rawshn.clr-token-rotation"
-SCRIPT="${CLR_ROTATE_SCRIPT:-$HOME/Projects/cursor-local-remote/scripts/deploy/rotate-auth-token.sh}"
+LABEL="${CLR_TOKEN_ROTATION_LABEL:-com.cursor-local-remote.token-rotation}"
+SCRIPT="${CLR_ROTATE_SCRIPT:-$(cd "$(dirname "$0")" && pwd)/rotate-auth-token.sh}"
 PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
 DOMAIN="gui/$(id -u)"
 LOG_DIR="$HOME/.cursor-local-remote/logs"

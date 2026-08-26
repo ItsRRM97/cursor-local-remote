@@ -4,7 +4,7 @@ import { spawn, execFileSync } from "child_process";
 import { resolve, dirname, join, sep } from "path";
 import { fileURLToPath } from "url";
 import { networkInterfaces, homedir } from "os";
-import { existsSync, readFileSync, readdirSync, statSync } from "fs";
+import { existsSync, readFileSync, readdirSync, statSync, mkdirSync } from "fs";
 import { randomInt } from "crypto";
 import { createServer } from "net";
 import http from "http";
@@ -12,6 +12,14 @@ import qrcode from "qrcode-terminal";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
+const NO_FOLDER_DIR = join(homedir(), ".cursor-local-remote", "no-folder");
+
+function ensureNoFolderDir() {
+  if (!existsSync(NO_FOLDER_DIR)) {
+    mkdirSync(NO_FOLDER_DIR, { recursive: true });
+  }
+  return resolve(NO_FOLDER_DIR);
+}
 
 function resolveClrNode() {
   const fromEnv = process.env.CLR_NODE?.trim();
@@ -253,7 +261,7 @@ if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
   console.error(`  Error: invalid port: ${rawPort}`);
   process.exit(1);
 }
-const workspace = positional[0] ? resolve(positional[0]) : process.cwd();
+const workspace = positional[0] ? resolve(positional[0]) : ensureNoFolderDir();
 
 if (!existsSync(workspace)) {
   console.error(`  Error: workspace path does not exist: ${workspace}`);

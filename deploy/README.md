@@ -2,7 +2,7 @@
 
 **CLR cannot run on Vercel.** It spawns the local Cursor `agent` CLI, reads your filesystem, and runs shell commands on your Mac. Vercel/serverless has no access to that.
 
-Web access works by exposing the **local** CLR server (`localhost:3100`) through **Cloudflare Tunnel** on a hostname you own (e.g. `clr.rawshn.com`). Your Mac must stay **awake** while agents run.
+Web access works by exposing the **local** CLR server (`localhost:3100`) through **Cloudflare Tunnel** on a hostname you own (e.g. `clr.example.com`). Your Mac must stay **awake** while agents run.
 
 ## Architecture
 
@@ -16,74 +16,82 @@ Cloudflare (TLS + optional Access OAuth)
 cloudflared on Mac ──► http://127.0.0.1:3100 ──► agent CLI ──► your files
 ```
 
-## One-time setup
+## Quick start (LAN only)
 
 ```bash
-cd ~/Projects/cursor-local-remote
+git clone https://github.com/ItsRRM97/cursor-local-remote.git
+cd cursor-local-remote
+npm install
+npm run build
+npm run dev   # or: npx cursor-local-remote
+```
 
-# 1. Strong auth token (rotates every 90 days)
+Scan the QR code in the terminal from your phone on the same Wi-Fi.
+
+Default workspace is **No folder** (`~/.cursor-local-remote/no-folder`), matching Cursor IDE "continue without a folder". Pick a project in the sidebar when you need a repo.
+
+## Optional: internet access (Cloudflare)
+
+```bash
+cd cursor-local-remote
+
+# 1. Auth token (required for remote API access)
 ./scripts/deploy/rotate-auth-token.sh --force
 ./scripts/deploy/install-token-rotation.sh install
 
-# 2. Cloudflare Tunnel (requires Cloudflare login + rawshn.com on Cloudflare)
+# 2. Tunnel (set hostname + Cloudflare login)
+export CLR_PUBLIC_HOSTNAME=clr.example.com
 ./scripts/deploy/install-cloudflare-tunnel.sh install
 
-# 3. Reinstall CLR launch agent (reads token from ~/.cursor-local-remote/auth-token.json)
-~/bin/clr-service-install.sh install
+# 3. Optional: Cloudflare Access (set account + email env vars first)
+export CLOUDFLARE_ACCOUNT_ID=...
+export CLR_PUBLIC_HOSTNAME=clr.example.com
+export CLR_ACCESS_EMAIL=you@example.com
+./scripts/deploy/install-cloudflare-access.sh install
+
+# 4. LaunchAgent (reads token from ~/.cursor-local-remote/auth-token.json)
+./scripts/deploy/clr-service-install.sh install
 ```
+
+Set `PUBLIC_URL`, `CF_ACCESS_*` env vars before `clr-service-install.sh install` if you use Cloudflare Access.
 
 ## URLs
 
 | Where | URL |
 |-------|-----|
 | Local | `http://127.0.0.1:3100/?token=<token>` |
-| Internet | `https://clr.rawshn.com/?token=<token>` |
+| Internet | `https://<your-hostname>/?token=<token>` |
 
-Current token: `~/.cursor-local-remote/auth-token.json` (field `token`).
+Token file: `~/.cursor-local-remote/auth-token.json` (field `token`).
 
 ## Security
 
-- Rotate token every 90 days (launchd job).
-- **Cloudflare Access:** `scripts/deploy/install-cloudflare-access.sh` (requires API token in `~/.cursor-local-remote/cloudflare-api-token`)
+- Use a strong random token (`rotate-auth-token.sh --force`).
+- Optional Cloudflare Access in front of your hostname.
 - Never port-forward `:3100` on your router.
 
-## Full API & deployment reference
+## Full API reference
 
-See **[deploy/API.md](./API.md)** for endpoints, auth layers, launchd labels, setup commands, and troubleshooting.
+See **[deploy/API.md](./API.md)** for endpoints, auth, launchd labels, and troubleshooting.
 
-**User guide:** [docs/USER_GUIDE.md](./docs/USER_GUIDE.md) (scroll while streaming, queue, PWA, composer Enter key).
+**User guide:** [docs/USER_GUIDE.md](../docs/USER_GUIDE.md)
 
 ## Apply code changes
 
-After editing the repo on the Mac:
-
 ```bash
-cd ~/Projects/cursor-local-remote
 npm run build
 ~/bin/clr-service-install.sh restart
 ```
 
-## Mac sleep
-
-CLR stops when the Mac **sleeps**. Display off + system awake is fine. Use AC power and disable system sleep for long remote jobs.
-
 ## macOS file access (Privacy)
 
-CLR reads Cursor session files on disk. Use the **CLR Server** app bundle (not generic node):
+Install **CLR Server** for Full Disk Access (not generic node):
 
 ```bash
-~/Projects/cursor-local-remote/scripts/deploy/install-clr-app.sh
+./scripts/deploy/install-clr-app.sh
 ~/bin/clr-service-install.sh restart
 ```
 
-Creates **`~/Applications/CLR.app`** (bundle ID `com.rawshn.clr`, shows as **CLR Server**).
+Creates **`~/Applications/CLR.app`** (bundle ID `com.cursor-local-remote.server`, shows as **CLR Server**).
 
-**Full Disk Access:**
-
-1. **System Settings → Privacy & Security → Full Disk Access**
-2. Click **+** and select **`~/Applications/CLR.app`**
-3. Enable the toggle for **CLR Server**
-
-Or drag `CLR.app` from Finder into the list.
-
-`clr-service-install.sh install` runs the app install step automatically.
+System Settings → Privacy & Security → Full Disk Access → add **CLR Server**.

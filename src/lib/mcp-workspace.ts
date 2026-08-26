@@ -4,10 +4,8 @@ import { homedir } from "os";
 import { existsSync } from "fs";
 import { workspaceToProjectKey } from "@/lib/transcript-reader";
 import { workspaceDisplayName } from "@/lib/workspace";
+import { ensureNoFolderDir, isNoFolderPath } from "@/lib/workspace-paths.server";
 import type { ProjectInfo } from "@/lib/types";
-
-const PROJECTS_DIR = join(homedir(), "Projects");
-const CLR_REPO = join(PROJECTS_DIR, "cursor-local-remote");
 
 function projectDir(workspace: string): string {
   return join(homedir(), ".cursor", "projects", workspaceToProjectKey(workspace));
@@ -53,71 +51,63 @@ export async function hasMcpCatalog(workspace: string): Promise<boolean> {
   return (await countMcpTools(workspace)) > 0;
 }
 
-async function mcpScore(workspace: string): Promise<number> {
-  const [tools, tokens] = await Promise.all([countMcpTools(workspace), countMcpAuthTokens(workspace)]);
-  if (tools === 0) return 0;
-  // Prefer workspaces where headless agent CLI has completed OAuth (notion, etc.)
-  return tools + tokens * 500;
-}
-
-const FALLBACK_CANDIDATES = [
-  () => process.env.CLR_MCP_WORKSPACE?.trim(),
-  () => CLR_REPO,
-  () => PROJECTS_DIR,
-];
-
 /**
- * Pick a workspace root where the Cursor agent CLI can load MCP servers.
- * Respects the requested workspace when it already has an MCP catalog.
- * Only falls back (e.g. to cursor-local-remote for OAuth tokens) when the
- * requested root has no MCP tools.
+ * Agent workspace for MCP/tool loading. Uses the requested folder unless
+ * CLR_MCP_WORKSPACE overrides (for headless OAuth on a specific project).
  */
 export async function resolveAgentWorkspace(requested?: string): Promise<string> {
+  const override = process.env.CLR_MCP_WORKSPACE?.trim();
+  if (override) return resolve(override);
+
   const raw = requested?.trim() || process.env.CURSOR_WORKSPACE?.trim();
-  const workspace = raw ? resolve(raw) : resolve(process.cwd());
-
-  if ((await mcpScore(workspace)) > 0) {
-    return workspace;
-  }
-
-  const candidates = new Set<string>();
-  for (const pick of FALLBACK_CANDIDATES) {
-    const candidate = pick();
-    if (candidate) candidates.add(resolve(candidate));
-  }
-
-  let best = workspace;
-  let bestScore = 0;
-
-  for (const candidate of candidates) {
-    const score = await mcpScore(candidate);
-    if (score > bestScore) {
-      best = candidate;
-      bestScore = score;
-    }
-  }
-
-  return best;
+  if (raw) return resolve(raw);
+  return ensureNoFolderDir();
 }
 
-/** Every top-level folder under ~/Projects, for the sidebar project picker. */
+function projectScanRoots(): string[] {
+  const roots: string[] = [];
+  const fromEnv = process.env.CLR_PROJECT_ROOTS?.split(":").map((s) => s.trim()).filter(Boolean);
+  if (fromEnv && fromEnv.length > 0) {
+    roots.push(...fromEnv);
+  } else {
+    const projectsDir = join(homedir(), "Projects");
+    if (existsSync(projectsDir)) roots.push(projectsDir);
+  }
+  return roots.map((r) => resolve(r));
+}
+
+/** Top-level folders under CLR_PROJECT_ROOTS (or ~/Projects when unset). */
 export async function listFilesystemProjects(): Promise<ProjectInfo[]> {
   const projects: ProjectInfo[] = [];
-  try {
-    const entries = await readdir(PROJECTS_DIR, { withFileTypes: true });
-    for (const entry of entries) {
-      if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
-      const path = resolve(join(PROJECTS_DIR, entry.name));
-      projects.push({
-        name: workspaceDisplayName(path),
-        path,
-        key: workspaceToProjectKey(path),
-      });
+  const seen = new Set<string>();
+
+  for (const root of projectScanRoots()) {
+    try {
+      const entries = await readdir(root, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+        const path = resolve(join(root, entry.name));
+        if (seen.has(path) || isNoFolderPath(path)) continue;
+        seen.add(path);
+        projects.push({
+          name: workspaceDisplayName(path),
+          path,
+          key: workspaceToProjectKey(path),
+        });
+      }
+    } catch {
+      // root missing or unreadable
     }
-  } catch {
-    // Projects dir missing or unreadable
   }
+
   return projects.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export { PROJECTS_DIR, CLR_REPO };
+export function noFolderProjectInfo(): ProjectInfo {
+  const path = ensureNoFolderDir();
+  return {
+    name: "No folder",
+    path,
+    key: workspaceToProjectKey(path),
+  };
+}

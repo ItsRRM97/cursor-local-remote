@@ -164,6 +164,7 @@ export function SessionSidebar({
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
   const [starred, setStarred] = useState<string[]>([]);
+  const [noFolderPath, setNoFolderPath] = useState<string | null>(null);
   const haptics = useHaptics();
 
   useEffect(() => {
@@ -205,6 +206,7 @@ export function SessionSidebar({
       .then((r) => r.json())
       .then((data) => {
         setProjects(data.projects || []);
+        if (data.noFolderPath) setNoFolderPath(data.noFolderPath);
         if (selectedProject) return;
         const preferred = data.currentWorkspace;
         if (preferred) {
@@ -426,6 +428,21 @@ export function SessionSidebar({
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setProjectDropdownOpen(false)} />
                 <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-bg-elevated border border-border rounded-lg shadow-xl py-1 max-h-60 overflow-y-auto">
+                  {noFolderPath && (
+                    <button
+                      onClick={() => handleProjectSelect(noFolderPath)}
+                      className={`w-full text-left px-3 py-2.5 min-h-[var(--clr-touch-min)] text-clr-sm transition-colors flex items-center gap-2 ${
+                        selectedProject === noFolderPath
+                          ? "project-picker-active text-text bg-bg-active"
+                          : "text-text-secondary hover:bg-bg-hover hover:text-text"
+                      }`}
+                    >
+                      {selectedProject === noFolderPath && (
+                        <CheckIcon size={12} className="shrink-0 text-accent" />
+                      )}
+                      <span>No folder</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => handleProjectSelect("__all__")}
                     className={`w-full text-left px-3 py-2.5 min-h-[var(--clr-touch-min)] text-clr-sm transition-colors flex items-center gap-2 ${

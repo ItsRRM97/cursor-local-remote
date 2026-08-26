@@ -93,7 +93,8 @@ if [[ -x "$HOME/bin/clr-service-install.sh" ]]; then
   "$HOME/bin/clr-service-install.sh" install
 elif command -v launchctl >/dev/null 2>&1; then
   DOMAIN="gui/$(id -u)"
-  launchctl kickstart -k "$DOMAIN/com.rawshn.cursor-local-remote" 2>/dev/null || true
+  LABEL="${CLR_LAUNCHD_LABEL:-com.cursor-local-remote.server}"
+  launchctl kickstart -k "$DOMAIN/${LABEL}" 2>/dev/null || true
 fi
 
 if [[ -n "$NOTIFY" ]]; then

@@ -1,22 +1,22 @@
 # Claude Agent Entry — Cursor Local Remote
 
-Bootstrap: `/Users/rawshn/AGENTS.md` (global skills registry).
-
 ## Project
 
 Local-network PWA to control Cursor CLI from phone/browser. Stack: Next.js, Tailwind v4 (`@theme` in `globals.css`), TypeScript.
 
-**Live URL:** `https://clr.rawshn.com` (Cloudflare Tunnel on Mac, not Vercel).
+CLR runs on your Mac (launchd or `clr` CLI), not Vercel. Optional internet access via Cloudflare Tunnel.
 
 ## Key paths
 
 | Path | Purpose |
 |------|---------|
+| `src/lib/workspace-paths.ts` | **No folder** dir (`~/.cursor-local-remote/no-folder`) |
+| `src/lib/workspace.ts` | Default workspace resolution |
+| `src/lib/mcp-workspace.ts` | Project picker, MCP workspace (no silent fallback) |
 | `src/app/globals.css` | Design tokens, coarse-pointer scale (`@media (pointer: coarse)`) |
 | `src/components/chat-input.tsx` | Composer: send, modes, images, Enter key behavior |
 | `src/components/message-list.tsx` | Scroll pin, Follow live, touch scroll |
-| `src/components/` | Chat, sidebar, settings, git, terminal |
-| `src/hooks/` | `use-chat`, `use-coarse-pointer`, `use-haptics`, etc. |
+| `src/components/session-sidebar.tsx` | Project picker (**No folder** pinned) |
 | `bin/cursor-remote.mjs` | CLI entry (`clr`), starts Next.js on port 3100 |
 | `scripts/deploy/clr-start.sh` | LaunchAgent start wrapper |
 | `scripts/deploy/clr-service-install.sh` | Install/restart CLR launchd service |
@@ -38,6 +38,7 @@ In QA mode, flag any code that does not match `DESIGN.md`.
 - Mobile-first: safe areas, touch targets (`--clr-touch-min`), scroll pin in `message-list.tsx`.
 - Coarse pointer detection: `useCoarsePointer()` hook mirrors `globals.css` `(pointer: coarse)` media query.
 - No em dashes in user-facing strings or docs.
+- Default workspace is **No folder**, not `$HOME`.
 
 ## Mobile UX (agent checklist)
 
@@ -48,25 +49,23 @@ In QA mode, flag any code that does not match `DESIGN.md`.
 ## Local development
 
 ```bash
-cd ~/Projects/cursor-local-remote
+cd cursor-local-remote
 npm install
 npm run dev          # dev server (port from bin/dev.mjs)
 npm run build        # production build (.next/) required before launchd restart
 npm run lint
 ```
 
-## Deploy / restart (clr.rawshn.com)
-
-CLR runs on the Mac via launchd, not Vercel.
+## Deploy / restart (launchd)
 
 ```bash
-cd ~/Projects/cursor-local-remote
+cd cursor-local-remote
 npm run build
 ~/bin/clr-service-install.sh restart
-# or: launchctl kickstart -k gui/$(id -u)/com.rawshn.cursor-local-remote
+# or: launchctl kickstart -k gui/$(id -u)/com.cursor-local-remote.server
 ```
 
-Tunnel (if needed): `launchctl kickstart -k gui/$(id -u)/com.rawshn.clr-cloudflared`
+Tunnel (if installed): `launchctl kickstart -k gui/$(id -u)/com.cursor-local-remote.cloudflared`
 
 Auth token: `~/.cursor-local-remote/auth-token.json` (field `token`).
 
@@ -81,6 +80,7 @@ All `/api/*` require `cr_session` cookie or `Authorization: Bearer <token>`.
 | `/api/sessions/watch` | GET (SSE) | Live session updates |
 | `/api/git` | GET/POST | Status, diff, commit, push |
 | `/api/info` | GET | Workspace, network URL |
+| `/api/projects` | GET | Projects + **No folder** |
 
 Full reference: `deploy/API.md`.
 
@@ -91,7 +91,7 @@ Full reference: `deploy/API.md`.
 | 401 on remote | `auth-token.json`, Cloudflare Access, `?token=` |
 | Agent failed to start | Cursor CLI auth: run `agent login` on the Mac. Logs: `~/.cursor-local-remote/logs/clr.err.log` |
 | Changes not live | Run `npm run build` then `clr-service-install.sh restart` |
-| MCP fails remotely | Settings → Workspace trust; pick project with MCP auth on Mac |
+| MCP fails remotely | Settings → Workspace trust; pick project with MCP auth on Mac; optional `CLR_MCP_WORKSPACE` |
 | Mac file access popup | `scripts/deploy/install-clr-app.sh`, Full Disk Access for CLR Server |
 
 More: `deploy/API.md#troubleshooting`, `docs/USER_GUIDE.md`.

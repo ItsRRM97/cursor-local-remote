@@ -1,22 +1,20 @@
 #!/bin/bash
-# Start cursor-local-remote (CLR) — interactive Cursor CLI agent on LAN.
-# Repo: ~/Projects/cursor-local-remote  ·  Default port: 3100 (not 3000 mirror)
-# Persistent daemon: ~/Library/LaunchAgents/com.rawshn.cursor-local-remote.plist (launchd KeepAlive).
-# Manage: launchctl kickstart -k gui/$(id -u)/com.rawshn.cursor-local-remote  ·  reload: clr-service-install.sh
+# Start cursor-local-remote (CLR) — Cursor CLI agent on LAN.
+# Default port: 3100. Persistent daemon: launchd via clr-service-install.sh
 set -euo pipefail
 
-CLR_ROOT="${CLR_ROOT:-$HOME/Projects/cursor-local-remote}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+CLR_ROOT="${CLR_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 PORT="${CLR_PORT:-3100}"
 CLR_NODE="${CLR_NODE:-${HOME}/Applications/CLR.app/Contents/MacOS/clr-server}"
 CLR_NODE_FALLBACK="${HOME}/.cursor-local-remote/bin/clr-server"
+NO_FOLDER="${HOME}/.cursor-local-remote/no-folder"
 
-# Agent model when UI sends "auto" (CLR omits --model) or no model in request.
-# Cursor CLI model id: auto
 export CURSOR_DEFAULT_MODEL="${CURSOR_DEFAULT_MODEL:-auto}"
 export CLR_NODE
 
 CLR_DATA_DIR="$HOME/.cursor-local-remote"
-mkdir -p "$CLR_DATA_DIR"
+mkdir -p "$CLR_DATA_DIR" "$NO_FOLDER"
 if command -v sqlite3 >/dev/null 2>&1; then
   sqlite3 "$CLR_DATA_DIR/sessions.db" \
     "CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -26,7 +24,7 @@ fi
 
 if [[ ! -f "$CLR_ROOT/bin/cursor-remote.mjs" ]]; then
   echo "ERROR: CLR not found at $CLR_ROOT" >&2
-  echo "Clone: git clone https://github.com/niko-chaffinchicas/cursor-local-remote.git $CLR_ROOT" >&2
+  echo "Clone: git clone https://github.com/ItsRRM97/cursor-local-remote.git" >&2
   exit 1
 fi
 
@@ -55,13 +53,16 @@ if ! command -v agent >/dev/null 2>&1; then
   exit 1
 fi
 
-# Token: ~/.cursor-local-remote/auth-token.json (rotates every 90d). Override: AUTH_TOKEN=… clr-start.sh
 if [[ -z "${AUTH_TOKEN:-}" ]]; then
   READ_TOKEN="${CLR_ROOT}/scripts/deploy/read-auth-token.sh"
   if [[ -x "${READ_TOKEN}" ]]; then
     AUTH_TOKEN="$("${READ_TOKEN}" 2>/dev/null || true)"
   fi
-  export AUTH_TOKEN="${AUTH_TOKEN:-wagon-kiosk}"
+  if [[ -z "${AUTH_TOKEN:-}" ]]; then
+    echo "ERROR: Set AUTH_TOKEN or create ~/.cursor-local-remote/auth-token.json" >&2
+    exit 1
+  fi
+  export AUTH_TOKEN
 fi
 
 # Usage: clr-start.sh [workspace] [clr flags...]

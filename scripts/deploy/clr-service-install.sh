@@ -2,18 +2,19 @@
 # Install / manage cursor-local-remote (CLR) as a user LaunchAgent.
 set -euo pipefail
 
-LABEL="com.rawshn.cursor-local-remote"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+LABEL="${CLR_LAUNCHD_LABEL:-com.cursor-local-remote.server}"
 PLIST_PATH="${HOME}/Library/LaunchAgents/${LABEL}.plist"
 LOG_DIR="${HOME}/.cursor-local-remote/logs"
-CLR_REPO="${CLR_REPO:-${HOME}/Projects/cursor-local-remote}"
+CLR_REPO="${CLR_REPO:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 CLR_START_SRC="${CLR_REPO}/scripts/deploy/clr-start.sh"
 CLR_START="${HOME}/bin/clr-start.sh"
 CLR_NODE="${HOME}/Applications/CLR.app/Contents/MacOS/clr-server"
 INSTALL_CLR_APP="${CLR_REPO}/scripts/deploy/install-clr-app.sh"
 INSTALL_CLR_NODE="${CLR_REPO}/scripts/deploy/install-clr-node.sh"
-WORKSPACE="${CLR_WORKSPACE:-${HOME}}"
+NO_FOLDER="${HOME}/.cursor-local-remote/no-folder"
 AUTH_TOKEN_FILE="${CLR_AUTH_FILE:-${HOME}/.cursor-local-remote/auth-token.json}"
-READ_TOKEN="${HOME}/Projects/cursor-local-remote/scripts/deploy/read-auth-token.sh"
+READ_TOKEN="${CLR_REPO}/scripts/deploy/read-auth-token.sh"
 UID_NUM="$(id -u)"
 DOMAIN="gui/${UID_NUM}"
 
@@ -22,7 +23,12 @@ read_auth_token() {
     "${READ_TOKEN}"
     return
   fi
-  echo "${AUTH_TOKEN:-wagon-kiosk}"
+  if [[ -n "${AUTH_TOKEN:-}" ]]; then
+    echo "${AUTH_TOKEN}"
+    return
+  fi
+  echo "ERROR: Set AUTH_TOKEN or create ${AUTH_TOKEN_FILE} (run rotate-auth-token.sh --force)" >&2
+  exit 1
 }
 
 usage() {
@@ -36,13 +42,17 @@ Usage: $(basename "$0") [install|uninstall|restart|status]
 
 Plist: ${PLIST_PATH}
 Logs:  ${LOG_DIR}/clr.{out,err}.log
+
+Optional env (set before install):
+  PUBLIC_URL, CF_ACCESS_TEAM_DOMAIN, CF_ACCESS_AUD, AUTH_TRUST_CLOUDFLARE_ACCESS
+  CLR_LAUNCHD_LABEL, CLR_WORKSPACE (default: ~/.cursor-local-remote/no-folder)
 EOF
 }
 
 write_plist() {
   local token
   token="$(read_auth_token)"
-  mkdir -p "${HOME}/Library/LaunchAgents" "${LOG_DIR}"
+  mkdir -p "${HOME}/Library/LaunchAgents" "${LOG_DIR}" "${NO_FOLDER}"
   cat >"${PLIST_PATH}" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -53,7 +63,6 @@ write_plist() {
   <key>ProgramArguments</key>
   <array>
     <string>${CLR_START}</string>
-    <string>${WORKSPACE}</string>
     <string>--no-open</string>
   </array>
   <key>WorkingDirectory</key>
@@ -76,16 +85,36 @@ write_plist() {
     <string>${token}</string>
     <key>CURSOR_DEFAULT_MODEL</key>
     <string>auto</string>
-    <key>PUBLIC_URL</key>
-    <string>${PUBLIC_URL:-https://clr.rawshn.com}</string>
-    <key>CF_ACCESS_TEAM_DOMAIN</key>
-    <string>${CF_ACCESS_TEAM_DOMAIN:-billowing-limit-310f.cloudflareaccess.com}</string>
-    <key>CF_ACCESS_AUD</key>
-    <string>${CF_ACCESS_AUD:-8f53549ef7fd28e492bba7feaee7e9e7effee8deb2ed326a54b0d493c9d0f115}</string>
-    <key>AUTH_TRUST_CLOUDFLARE_ACCESS</key>
-    <string>${AUTH_TRUST_CLOUDFLARE_ACCESS:-1}</string>
     <key>CLR_NODE</key>
     <string>${CLR_NODE}</string>
+PLIST
+
+  if [[ -n "${PUBLIC_URL:-}" ]]; then
+    cat >>"${PLIST_PATH}" <<PLIST
+    <key>PUBLIC_URL</key>
+    <string>${PUBLIC_URL}</string>
+PLIST
+  fi
+  if [[ -n "${CF_ACCESS_TEAM_DOMAIN:-}" ]]; then
+    cat >>"${PLIST_PATH}" <<PLIST
+    <key>CF_ACCESS_TEAM_DOMAIN</key>
+    <string>${CF_ACCESS_TEAM_DOMAIN}</string>
+PLIST
+  fi
+  if [[ -n "${CF_ACCESS_AUD:-}" ]]; then
+    cat >>"${PLIST_PATH}" <<PLIST
+    <key>CF_ACCESS_AUD</key>
+    <string>${CF_ACCESS_AUD}</string>
+PLIST
+  fi
+  if [[ -n "${AUTH_TRUST_CLOUDFLARE_ACCESS:-}" ]]; then
+    cat >>"${PLIST_PATH}" <<PLIST
+    <key>AUTH_TRUST_CLOUDFLARE_ACCESS</key>
+    <string>${AUTH_TRUST_CLOUDFLARE_ACCESS}</string>
+PLIST
+  fi
+
+  cat >>"${PLIST_PATH}" <<PLIST
   </dict>
 </dict>
 </plist>

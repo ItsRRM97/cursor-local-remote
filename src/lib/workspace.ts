@@ -1,14 +1,16 @@
 import { resolve } from "path";
-import { homedir } from "os";
 import { workspaceDisplayName as displayName } from "@/lib/workspace-name";
+import { ensureNoFolderDir } from "@/lib/workspace-paths.server";
+
+export { NO_FOLDER_DIR, ensureNoFolderDir, isNoFolderPath } from "@/lib/workspace-paths.server";
+export { getNoFolderDir } from "@/lib/workspace-paths";
 
 export function getWorkspace(): string {
   const fromEnv = process.env.CURSOR_WORKSPACE;
   if (fromEnv) return resolve(fromEnv);
-  return process.cwd();
+  return ensureNoFolderDir();
 }
 
-/** Label for the home directory workspace (matches Cursor IDE "Home"). */
 export function workspaceDisplayName(workspace: string): string {
-  return displayName(workspace, homedir());
+  return displayName(workspace);
 }

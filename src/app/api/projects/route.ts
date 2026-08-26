@@ -1,7 +1,8 @@
+import { resolve } from "node:path";
 import { listProjects } from "@/lib/transcript-reader";
 import { listWorkspaces } from "@/lib/session-store";
 import { getWorkspace, workspaceDisplayName } from "@/lib/workspace";
-import { listFilesystemProjects, resolveAgentWorkspace } from "@/lib/mcp-workspace";
+import { listFilesystemProjects, noFolderProjectInfo } from "@/lib/mcp-workspace";
 import { serverError } from "@/lib/errors";
 import type { ProjectInfo } from "@/lib/types";
 
@@ -15,9 +16,13 @@ export async function GET() {
       listFilesystemProjects(),
     ]);
     const currentWorkspace = getWorkspace();
-    const mcpWorkspace = await resolveAgentWorkspace(currentWorkspace);
+    const mcpOverride = process.env.CLR_MCP_WORKSPACE?.trim();
+    const resolvedMcp = mcpOverride ? resolve(mcpOverride) : null;
 
     const byPath = new Map<string, ProjectInfo>();
+    const noFolder = noFolderProjectInfo();
+    byPath.set(noFolder.path, noFolder);
+
     for (const p of transcriptProjects) {
       byPath.set(p.path, p);
     }
@@ -36,11 +41,18 @@ export async function GET() {
       });
     }
 
-    const projects = Array.from(byPath.values()).sort((a, b) => a.name.localeCompare(b.name));
+    const projects = Array.from(byPath.values()).sort((a, b) => {
+      if (a.path === noFolder.path) return -1;
+      if (b.path === noFolder.path) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
     return Response.json({
       projects,
       currentWorkspace,
-      mcpWorkspace: mcpWorkspace !== currentWorkspace ? mcpWorkspace : null,
+      noFolderPath: noFolder.path,
+      mcpWorkspace:
+        resolvedMcp && resolvedMcp !== currentWorkspace ? resolvedMcp : null,
     });
   } catch {
     return serverError("Failed to list projects");

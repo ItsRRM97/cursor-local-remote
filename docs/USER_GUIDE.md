@@ -41,7 +41,9 @@ On touch devices the hint below the mode pills shows `↵ newline · ↑ send`.
 
 ## Sessions and projects
 
-- **Sidebar (☰)** — switch projects, open past sessions, start a new chat.
+- **No folder** — default scratch workspace (`~/.cursor-local-remote/no-folder`), like Cursor IDE "continue without a folder". Git panel shows "not a repository".
+- **Sidebar (☰)** — switch projects, open past sessions, start a new chat. **No folder** is pinned at the top.
+- Extra project roots: set `CLR_PROJECT_ROOTS` (colon-separated). If unset, `~/Projects` is scanned when it exists.
 - Sessions started in CLR may not appear in the desktop sidebar (Cursor limitation). File edits and terminal still run on your Mac.
 - **Star** projects in the sidebar to pin them at the top.
 
@@ -72,7 +74,7 @@ Requires HTTPS for remote access.
 | Chat jumps to bottom while reading | Update CLR (scroll pin fix). Scroll up; use **Follow live** only when you want to catch up. |
 | Enter sends instead of newline on phone | Update CLR. On touch devices, Enter adds a line; tap **↑** to send. |
 | `[REDACTED]` in old messages | Update CLR; transcripts strip Cursor redaction placeholders. Reload session. |
-| MCP / Notion not working | Enable **Workspace trust**. Pick a project that has MCP logged in on the Mac (e.g. `~/Projects/cursor-local-remote`). |
+| MCP / Notion not working | Enable **Workspace trust**. Pick a project that has MCP logged in on the Mac, or set `CLR_MCP_WORKSPACE`. |
 | 401 on remote URL | Add `?token=` from `auth-token.json` or complete Cloudflare Access login. |
 | Agent failed to start / CLI not authenticated | On the Mac, run `agent login` in a terminal, then send again. |
 | Agent stops mid-task | Mac slept. Keep Mac awake on power for long remote jobs. |

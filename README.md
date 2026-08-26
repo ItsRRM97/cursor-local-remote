@@ -1,5 +1,3 @@
-Edit: Due to Cursor pricing changes, I have moved to Claude Code (that already has this feature). I will no longer be maintaining the project and recommend you fork it and make changes if needed.
-
 # Cursor Local Remote
 
 Control Cursor from your phone, tablet or any browser on your local network. Great for monitoring and nudging Cursor while in the bathroom, watching a movie or cooking food.
@@ -93,7 +91,7 @@ clr [workspace] [options]
 
 | Option | Description |
 | --- | --- |
-| `workspace` | Path to your project folder (defaults to cwd) |
+| `workspace` | Path to your project folder (defaults to **No folder** scratch dir) |
 | `-p, --port` | Port to run on (default: `3100`) |
 | `-t, --token` | Set auth token (otherwise random or `AUTH_TOKEN` env) |
 | `--host` | Bind to specific host/IP (default: `0.0.0.0`) |
@@ -107,7 +105,7 @@ clr [workspace] [options]
 | `-V, --version` | Show version number |
 
 ```bash
-clr                          # current folder
+clr                          # No folder scratch workspace
 clr ~/projects/my-app        # specific project
 clr --port 8080              # different port
 clr --token my-secret        # fixed auth token
@@ -164,6 +162,8 @@ All endpoints require a valid token (cookie or `Bearer` header).
 | --- | --- |
 | `AUTH_TOKEN` | Fixed auth token (otherwise randomly generated each launch) |
 | `CURSOR_WORKSPACE` | Workspace path (set automatically by the CLI) |
+| `CLR_PROJECT_ROOTS` | Colon-separated paths for project picker scan |
+| `CLR_MCP_WORKSPACE` | Optional MCP workspace override |
 | `CURSOR_TRUST` | Set to `1` to pass `--trust` to the agent (auto-approve all tool calls) |
 | `PORT` | Server port (default: `3100`) |
 
@@ -192,7 +192,7 @@ Day-to-day usage (scroll while streaming, queue, PWA, notifications): **[docs/US
 | `[REDACTED]` in chat history | Update CLR (strips Cursor transcript placeholders). Reload the session. |
 | MCP tools fail over remote | Settings → enable **Workspace trust**. Select a project with MCP auth on the Mac. |
 | 401 / auth errors | Use `?token=` from terminal or `~/.cursor-local-remote/auth-token.json`. |
-| UI changes not visible on clr.rawshn.com | Run `npm run build` in repo, then `~/bin/clr-service-install.sh restart`. |
+| UI changes not visible after deploy | Run `npm run build` in repo, then `~/bin/clr-service-install.sh restart`. |
 
 More: [deploy/API.md](./deploy/API.md#troubleshooting) and [docs/USER_GUIDE.md](./docs/USER_GUIDE.md).
 
@@ -209,14 +209,14 @@ npm run dev
 
 **Agent-oriented docs:** [CLAUDE.md](./CLAUDE.md) (key paths, deploy, mobile UX). **User guide:** [docs/USER_GUIDE.md](./docs/USER_GUIDE.md). **Remote deploy:** [deploy/README.md](./deploy/README.md), [deploy/API.md](./deploy/API.md).
 
-**Deploy local changes to clr.rawshn.com:**
+**Apply local changes (launchd install):**
 
 ```bash
 npm run build
 ~/bin/clr-service-install.sh restart
 ```
 
-Upstream: [jon-makinen/cursor-local-remote](https://github.com/jon-makinen/cursor-local-remote).
+Upstream: [jon-makinen/cursor-local-remote](https://github.com/jon-makinen/cursor-local-remote) (original project; Jon no longer maintains it).
 
 ## License
 

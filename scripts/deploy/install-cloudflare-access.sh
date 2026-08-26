@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Create Cloudflare Access app for CLR (clr.rawshn.com) + allow policy for your email.
+# Create Cloudflare Access app for CLR + allow policy for your email(s).
 set -euo pipefail
 
-ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:-a032322f2e5401950110e8845849dd4b}"
-HOSTNAME="${CLR_PUBLIC_HOSTNAME:-clr.rawshn.com}"
+ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:?Set CLOUDFLARE_ACCOUNT_ID}"
+HOSTNAME="${CLR_PUBLIC_HOSTNAME:?Set CLR_PUBLIC_HOSTNAME (e.g. clr.example.com)}"
 APP_NAME="${CLR_ACCESS_APP_NAME:-Cursor Local Remote}"
-USER_EMAIL="${CLR_ACCESS_EMAIL:-mishra.roshanraj@gmail.com}"
-USER_EMAIL_ALT="${CLR_ACCESS_EMAIL_ALT:-mishraroshanraj@gmail.com}"
+USER_EMAIL="${CLR_ACCESS_EMAIL:?Set CLR_ACCESS_EMAIL}"
+USER_EMAIL_ALT="${CLR_ACCESS_EMAIL_ALT:-}"
 TOKEN_FILE="${CLOUDFLARE_API_TOKEN_FILE:-$HOME/.cursor-local-remote/cloudflare-api-token}"
 SESSION_DURATION="${CLR_ACCESS_SESSION:-24h}"
 
@@ -17,10 +17,7 @@ Usage: $(basename "$0") [install|status]
 Requires Cloudflare API token with Zero Trust / Access edit permissions.
 Store token in: $TOKEN_FILE (chmod 600) or export CLOUDFLARE_API_TOKEN.
 
-Create token: https://dash.cloudflare.com/profile/api-tokens
-  Template: "Edit Cloudflare Zero Trust" or custom with Access Apps Write
-
-install  Create Access app + allow policy for $USER_EMAIL
+install  Create Access app + allow policy for CLR_ACCESS_EMAIL
 status   List Access apps matching hostname
 EOF
 }
@@ -88,8 +85,9 @@ print(json.dumps({
     echo "Created app id: $app_id"
   fi
 
-  echo "Adding allow policy for ${USER_EMAIL} and ${USER_EMAIL_ALT}…"
-  APP_EMAIL="$USER_EMAIL" APP_EMAIL_ALT="$USER_EMAIL_ALT" python3 -c "
+  echo "Adding allow policy for ${USER_EMAIL}…"
+  if [[ -n "$USER_EMAIL_ALT" ]]; then
+    APP_EMAIL="$USER_EMAIL" APP_EMAIL_ALT="$USER_EMAIL_ALT" python3 -c "
 import json, os
 print(json.dumps({
   'name': 'Allow owner emails',
@@ -101,11 +99,20 @@ print(json.dumps({
   ],
 }))
 " | cf_api POST "/accounts/${ACCOUNT_ID}/access/apps/${app_id}/policies" --data @- >/dev/null
+  else
+    APP_EMAIL="$USER_EMAIL" python3 -c "
+import json, os
+print(json.dumps({
+  'name': 'Allow owner email',
+  'decision': 'allow',
+  'precedence': 1,
+  'include': [{'email': {'email': os.environ['APP_EMAIL']}}],
+}))
+" | cf_api POST "/accounts/${ACCOUNT_ID}/access/apps/${app_id}/policies" --data @- >/dev/null
+  fi
 
   echo ""
   echo "Cloudflare Access installed for https://${HOSTNAME}"
-  echo "  - Sign in with Google/GitHub (or email OTP) as ${USER_EMAIL}"
-  echo "  - Then CLR token (?token=…) still required after Access gate"
 }
 
 case "${1:-install}" in

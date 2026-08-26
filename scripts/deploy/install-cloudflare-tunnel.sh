@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Install Cloudflare Tunnel to expose local CLR (port 3100) at clr.rawshn.com
+# Install Cloudflare Tunnel to expose local CLR (port 3100) on your hostname
 set -euo pipefail
 
-TUNNEL_NAME="${CLR_TUNNEL_NAME:-clr-rawshn}"
-HOSTNAME="${CLR_PUBLIC_HOSTNAME:-clr.rawshn.com}"
+TUNNEL_NAME="${CLR_TUNNEL_NAME:-clr-tunnel}"
+HOSTNAME="${CLR_PUBLIC_HOSTNAME:-clr.example.com}"
 LOCAL_SERVICE="${CLR_LOCAL_URL:-http://127.0.0.1:3100}"
-LABEL="com.rawshn.clr-cloudflared"
+LABEL="${CLR_TUNNEL_LAUNCHD_LABEL:-com.cursor-local-remote.cloudflared}"
 PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
 DOMAIN="gui/$(id -u)"
 LOG_DIR="$HOME/.cursor-local-remote/logs"
@@ -19,7 +19,7 @@ Usage: $(basename "$0") [install|uninstall|status]
   uninstall  stop tunnel launch agent
   status     tunnel list + launchctl
 
-Requires: Cloudflare account with rawshn.com zone. First run opens browser for:
+Requires: Cloudflare account with your zone on Cloudflare. First run opens browser for:
   cloudflared tunnel login
 EOF
 }
@@ -40,7 +40,7 @@ ensure_login() {
   if [[ -f "$CF_DIR/cert.pem" ]]; then
     return 0
   fi
-  echo "Opening Cloudflare login — authorize access to rawshn.com in the browser…"
+  echo "Opening Cloudflare login — authorize access to your zone in the browser…"
   cloudflared tunnel login
 }
 
