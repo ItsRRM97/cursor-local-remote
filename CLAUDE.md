@@ -89,6 +89,7 @@ Full reference: `deploy/API.md`.
 | Issue | Where to look |
 |-------|---------------|
 | 401 on remote | `auth-token.json`, Cloudflare Access, `?token=` |
+| Agent failed to start | Cursor CLI auth: run `agent login` on the Mac. Logs: `~/.cursor-local-remote/logs/clr.err.log` |
 | Changes not live | Run `npm run build` then `clr-service-install.sh restart` |
 | MCP fails remotely | Settings → Workspace trust; pick project with MCP auth on Mac |
 | Mac file access popup | `scripts/deploy/install-clr-app.sh`, Full Disk Access for CLR Server |

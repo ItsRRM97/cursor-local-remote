@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
-import { spawnAgent } from "@/lib/cursor-cli";
+import { spawnAgent, classifyAgentStartError } from "@/lib/cursor-cli";
 import { getWorkspace } from "@/lib/workspace";
 import { resolveAgentWorkspace } from "@/lib/mcp-workspace";
 import { upsertSession } from "@/lib/session-store";
@@ -16,68 +16,6 @@ export const dynamic = "force-dynamic";
 setProcessExitHook((sessionId, workspace) => {
   void notifyAgentComplete(sessionId, workspace);
 });
-
-function waitForSessionId(
-  child: Awaited<ReturnType<typeof spawnAgent>>,
-  workspace: string,
-  prompt: string,
-  requestId: string,
-): Promise<string | null> {
-  return new Promise((resolve) => {
-    let found = false;
-    let buffer = "";
-    let resolvedSessionId: string | null = null;
-
-    const timer = setTimeout(() => {
-      if (!found) resolve(null);
-    }, AGENT_INIT_TIMEOUT_MS);
-
-    child.stdout?.on("data", (chunk: Buffer) => {
-      buffer += chunk.toString();
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        try {
-          const event = JSON.parse(line);
-
-          if (!found && event.type === "system" && event.subtype === "init" && event.session_id) {
-            found = true;
-            resolvedSessionId = event.session_id;
-            clearTimeout(timer);
-            void upsertSession(event.session_id, workspace, prompt);
-            promoteToSessionId(requestId, event.session_id);
-            resolve(event.session_id);
-          }
-
-          if (
-            resolvedSessionId &&
-            (event.type === "user" || event.type === "assistant" || event.type === "tool_call")
-          ) {
-            pushLiveEvent(resolvedSessionId, event);
-          }
-        } catch {
-          // non-json line
-        }
-      }
-    });
-
-    child.on("close", () => {
-      if (!found) {
-        clearTimeout(timer);
-        resolve(null);
-      }
-    });
-
-    child.on("error", () => {
-      if (!found) {
-        clearTimeout(timer);
-        resolve(null);
-      }
-    });
-  });
-}
 
 export async function POST(req: Request) {
   const raw = await parseJsonBody<ChatRequest>(req);
@@ -97,7 +35,7 @@ export async function POST(req: Request) {
       console.warn(`[chat] MCP workspace fallback: ${requested} -> ${workspace}`);
     }
 
-    const child = await spawnAgent({
+    const spawned = await spawnAgent({
       prompt: body.prompt,
       sessionId: body.sessionId,
       workspace,
@@ -105,7 +43,7 @@ export async function POST(req: Request) {
       mode: body.mode,
     });
 
-    registerProcess(requestId, child, workspace);
+    registerProcess(requestId, spawned.child, workspace);
 
     if (body.sessionId) {
       promoteToSessionId(requestId, body.sessionId);
@@ -113,22 +51,36 @@ export async function POST(req: Request) {
 
     const verbose = process.env.CLR_VERBOSE === "1";
 
-    child.stderr?.on("data", (chunk: Buffer) => {
-      const text = chunk.toString().trim();
-      if (text) console.error("[agent stderr]", text);
-    });
-
     if (verbose) {
       console.warn(`[chat] spawning agent in ${workspace} (model=${body.model ?? "default"}, mode=${body.mode ?? "agent"})`);
     }
 
-    const sessionId = await waitForSessionId(child, workspace, body.prompt, requestId);
+    let liveSessionId = body.sessionId ?? null;
+    const sessionId = await spawned.waitForSessionId(AGENT_INIT_TIMEOUT_MS, (event) => {
+      const eventSessionId = typeof event.session_id === "string" ? event.session_id : null;
+      if (!liveSessionId && eventSessionId) {
+        liveSessionId = eventSessionId;
+        void upsertSession(eventSessionId, workspace, body.prompt);
+        promoteToSessionId(requestId, eventSessionId);
+      }
+      if (
+        liveSessionId &&
+        (event.type === "user" || event.type === "assistant" || event.type === "tool_call")
+      ) {
+        pushLiveEvent(liveSessionId, event);
+      }
+    });
 
     if (!sessionId) {
-      child.kill("SIGTERM");
-      console.error("[chat] agent did not emit init event within timeout");
-      return serverError("Agent failed to start");
+      spawned.child.kill("SIGTERM");
+      const timedOut = spawned.child.exitCode === null;
+      const message = classifyAgentStartError(spawned.stderr(), timedOut);
+      console.error("[chat] agent did not start:", message);
+      return serverError(message);
     }
+
+    void upsertSession(sessionId, workspace, body.prompt);
+    promoteToSessionId(requestId, sessionId);
 
     if (verbose) {
       console.warn(`[chat] agent started session ${sessionId}`);

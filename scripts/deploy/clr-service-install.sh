@@ -70,6 +70,8 @@ write_plist() {
   <dict>
     <key>PATH</key>
     <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${HOME}/.local/bin</string>
+    <key>HOME</key>
+    <string>${HOME}</string>
     <key>AUTH_TOKEN</key>
     <string>${token}</string>
     <key>CURSOR_DEFAULT_MODEL</key>

@@ -277,6 +277,7 @@ chmod 600 ~/.cursor-local-remote/cloudflare-api-token
 | Symptom | Fix |
 |---------|-----|
 | 401 on public URL | Add `?token=` or `Authorization: Bearer` header |
+| Agent failed to start / not authenticated | Cursor CLI login expired. On the Mac run `agent login`, then retry. Optional: set `CURSOR_API_KEY` on the launch agent. |
 | Cloudflare login loop | Complete Access policy for your email |
 | Tunnel down | `launchctl kickstart -k gui/$(id -u)/com.rawshn.clr-cloudflared` |
 | Agent stops mid-task | Mac slept — disable system sleep on AC |

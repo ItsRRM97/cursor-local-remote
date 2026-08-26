@@ -4,6 +4,7 @@ import type { ModelInfo } from "@/lib/types";
 import { serverError, safeErrorMessage } from "@/lib/errors";
 import { MODELS_CACHE_TTL_MS, MODELS_FETCH_TIMEOUT_MS } from "@/lib/constants";
 import { getConfig } from "@/lib/session-store";
+import { agentEnv, classifyAgentStartError, resolveAgentBin } from "@/lib/cursor-cli";
 
 const execFileAsync = promisify(execFile);
 
@@ -52,9 +53,10 @@ export async function GET() {
     const trustConfig = trustEnv === "0" ? false : trustEnv === "1" ? true : (await getConfig("trust")) !== "0";
     if (trustConfig) agentArgs.push("--trust");
 
-    const { stdout } = await execFileAsync("agent", agentArgs, {
+    const { stdout } = await execFileAsync(resolveAgentBin(), agentArgs, {
       encoding: "utf-8",
       timeout: MODELS_FETCH_TIMEOUT_MS,
+      env: agentEnv(),
     });
 
     const models = parseModels(stdout);
@@ -66,6 +68,8 @@ export async function GET() {
     return Response.json({ models });
   } catch (err) {
     safeErrorMessage(err, "Failed to fetch models");
-    return serverError("Failed to fetch models");
+    const stderr =
+      err && typeof err === "object" && "stderr" in err ? String((err as { stderr: unknown }).stderr) : "";
+    return serverError(classifyAgentStartError(stderr, false));
   }
 }

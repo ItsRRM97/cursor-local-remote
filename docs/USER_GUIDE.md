@@ -74,6 +74,7 @@ Requires HTTPS for remote access.
 | `[REDACTED]` in old messages | Update CLR; transcripts strip Cursor redaction placeholders. Reload session. |
 | MCP / Notion not working | Enable **Workspace trust**. Pick a project that has MCP logged in on the Mac (e.g. `~/Projects/cursor-local-remote`). |
 | 401 on remote URL | Add `?token=` from `auth-token.json` or complete Cloudflare Access login. |
+| Agent failed to start / CLI not authenticated | On the Mac, run `agent login` in a terminal, then send again. |
 | Agent stops mid-task | Mac slept. Keep Mac awake on power for long remote jobs. |
 | macOS privacy popup | Install **CLR Server** app: `scripts/deploy/install-clr-app.sh`, grant Full Disk Access to CLR Server. |
 
