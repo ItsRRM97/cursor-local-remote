@@ -87,6 +87,8 @@ write_plist() {
     <string>auto</string>
     <key>CLR_NODE</key>
     <string>${CLR_NODE}</string>
+    <key>CLR_REPO</key>
+    <string>${CLR_REPO}</string>
 PLIST
 
   if [[ -n "${PUBLIC_URL:-}" ]]; then
@@ -111,6 +113,12 @@ PLIST
     cat >>"${PLIST_PATH}" <<PLIST
     <key>AUTH_TRUST_CLOUDFLARE_ACCESS</key>
     <string>${AUTH_TRUST_CLOUDFLARE_ACCESS}</string>
+PLIST
+  fi
+  if [[ -n "${CLR_WORKSPACE:-}" ]]; then
+    cat >>"${PLIST_PATH}" <<PLIST
+    <key>CURSOR_WORKSPACE</key>
+    <string>${CLR_WORKSPACE}</string>
 PLIST
   fi
 

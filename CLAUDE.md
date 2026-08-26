@@ -12,7 +12,7 @@ CLR runs on your Mac (launchd or `clr` CLI), not Vercel. Optional internet acces
 |------|---------|
 | `src/lib/workspace-paths.ts` | **No folder** dir (`~/.cursor-local-remote/no-folder`) |
 | `src/lib/workspace.ts` | Default workspace resolution |
-| `src/lib/mcp-workspace.ts` | Project picker, MCP workspace (no silent fallback) |
+| `src/lib/cursor-workspaces.ts` | Project list from Cursor IDE `state.vscdb` |
 | `src/app/globals.css` | Design tokens, coarse-pointer scale (`@media (pointer: coarse)`) |
 | `src/components/chat-input.tsx` | Composer: send, modes, images, Enter key behavior |
 | `src/components/message-list.tsx` | Scroll pin, Follow live, touch scroll |

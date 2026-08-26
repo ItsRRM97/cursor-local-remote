@@ -1,19 +1,34 @@
 import { resolve } from "node:path";
-import { listProjects } from "@/lib/transcript-reader";
 import { listWorkspaces } from "@/lib/session-store";
 import { getWorkspace, workspaceDisplayName } from "@/lib/workspace";
+import { listCursorWorkspaces } from "@/lib/cursor-workspaces";
 import { listFilesystemProjects, noFolderProjectInfo } from "@/lib/mcp-workspace";
 import { serverError } from "@/lib/errors";
 import type { ProjectInfo } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
+const RECENT_LIMIT = 8;
+
+function mergeProject(existing: ProjectInfo | undefined, incoming: ProjectInfo): ProjectInfo {
+  if (!existing) return incoming;
+  return {
+    ...existing,
+    ...incoming,
+    name: incoming.name || existing.name,
+    displayPath: incoming.displayPath ?? existing.displayPath,
+    lastUsedAt: Math.max(existing.lastUsedAt ?? 0, incoming.lastUsedAt ?? 0) || undefined,
+  };
+}
+
 export async function GET() {
   try {
-    const [transcriptProjects, dbWorkspaces, filesystemProjects] = await Promise.all([
-      listProjects(),
+    const [cursorProjects, dbWorkspaces, filesystemProjects] = await Promise.all([
+      listCursorWorkspaces(),
       listWorkspaces(),
-      listFilesystemProjects(),
+      process.env.CLR_PROJECT_ROOTS_FALLBACK === "1"
+        ? listFilesystemProjects()
+        : Promise.resolve([] as ProjectInfo[]),
     ]);
     const currentWorkspace = getWorkspace();
     const mcpOverride = process.env.CLR_MCP_WORKSPACE?.trim();
@@ -23,8 +38,8 @@ export async function GET() {
     const noFolder = noFolderProjectInfo();
     byPath.set(noFolder.path, noFolder);
 
-    for (const p of transcriptProjects) {
-      byPath.set(p.path, p);
+    for (const p of cursorProjects) {
+      byPath.set(p.path, mergeProject(byPath.get(p.path), p));
     }
     for (const ws of dbWorkspaces) {
       if (byPath.has(ws)) continue;
@@ -41,16 +56,34 @@ export async function GET() {
       });
     }
 
-    const projects = Array.from(byPath.values()).sort((a, b) => {
-      if (a.path === noFolder.path) return -1;
-      if (b.path === noFolder.path) return 1;
-      return a.name.localeCompare(b.name);
-    });
+    const all = Array.from(byPath.values());
+    const noFolderPath = noFolder.path;
+
+    const folderProjects = all
+      .filter((p) => p.path !== noFolderPath)
+      .sort((a, b) => {
+        const ta = a.lastUsedAt ?? 0;
+        const tb = b.lastUsedAt ?? 0;
+        if (tb !== ta) return tb - ta;
+        return a.name.localeCompare(b.name);
+      });
+
+    const recentPaths = new Set<string>();
+    const recent: ProjectInfo[] = [];
+    for (const p of folderProjects) {
+      if (recent.length >= RECENT_LIMIT) break;
+      if (recentPaths.has(p.path)) continue;
+      recentPaths.add(p.path);
+      recent.push(p);
+    }
+
+    const projects = [noFolder, ...folderProjects];
 
     return Response.json({
       projects,
+      recent,
       currentWorkspace,
-      noFolderPath: noFolder.path,
+      noFolderPath,
       mcpWorkspace:
         resolvedMcp && resolvedMcp !== currentWorkspace ? resolvedMcp : null,
     });

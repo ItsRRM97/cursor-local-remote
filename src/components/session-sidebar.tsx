@@ -161,6 +161,7 @@ export function SessionSidebar({
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
+  const [recentProjects, setRecentProjects] = useState<ProjectInfo[]>([]);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
   const [starred, setStarred] = useState<string[]>([]);
@@ -201,11 +202,17 @@ export function SessionSidebar({
     });
   }, []);
 
+  const projectLabel = useCallback((p: ProjectInfo) => {
+    if (p.displayPath?.startsWith("~/")) return p.displayPath.slice(2);
+    return p.name;
+  }, []);
+
   const fetchProjects = useCallback(() => {
     apiFetch("/api/projects")
       .then((r) => r.json())
       .then((data) => {
         setProjects(data.projects || []);
+        setRecentProjects(data.recent || []);
         if (data.noFolderPath) setNoFolderPath(data.noFolderPath);
         if (selectedProject) return;
         const preferred = data.currentWorkspace;
@@ -307,8 +314,12 @@ export function SessionSidebar({
 
   const currentProjectName = selectedProject === "__all__"
     ? "All projects"
-    : projects.find((p) => p.path === selectedProject)?.name
-      || (selectedProject ? workspaceDisplayName(selectedProject) : null)
+    : (() => {
+        const proj = projects.find((p) => p.path === selectedProject)
+          || recentProjects.find((p) => p.path === selectedProject);
+        if (proj) return projectLabel(proj);
+        return selectedProject ? workspaceDisplayName(selectedProject) : null;
+      })()
       || "Current project";
 
   return (
@@ -375,14 +386,49 @@ export function SessionSidebar({
             </div>
           </div>
 
+          {recentProjects.length > 0 && (
+            <div className="space-y-px">
+              <p className="text-clr-2xs text-text-muted uppercase tracking-wider px-3 pt-1 pb-0.5">
+                Recent
+              </p>
+              {recentProjects.map((p) => {
+                const isActive = selectedProject === p.path;
+                const termCount = workspaceTerminals[p.path] || 0;
+                return (
+                  <button
+                    key={p.path}
+                    onClick={() => handleProjectSelect(p.path)}
+                    aria-current={isActive ? "true" : undefined}
+                    className={`w-full flex items-center gap-1.5 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] text-clr-sm transition-colors ${
+                      isActive
+                        ? "project-picker-active bg-bg-active text-text"
+                        : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
+                    }`}
+                  >
+                    {isActive ? (
+                      <CheckIcon size={12} className="shrink-0 text-accent" />
+                    ) : (
+                      <span className="shrink-0 w-3" />
+                    )}
+                    <span className="truncate flex-1 text-left">{projectLabel(p)}</span>
+                    {termCount > 0 && (
+                      <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-success" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {starred.length > 0 && (
             <div className="space-y-px">
               <p className="text-clr-2xs text-text-muted uppercase tracking-wider px-3 pt-1 pb-0.5">
                 Starred
               </p>
               {starred.map((path) => {
-                const proj = projects.find((p) => p.path === path);
-                const name = proj?.name || workspaceDisplayName(path);
+                const proj = projects.find((p) => p.path === path)
+                  || recentProjects.find((p) => p.path === path);
+                const name = proj ? projectLabel(proj) : workspaceDisplayName(path);
                 const isActive = selectedProject === path;
                 const termCount = workspaceTerminals[path] || 0;
                 return (
@@ -457,8 +503,9 @@ export function SessionSidebar({
                     <span>All projects</span>
                   </button>
                   <div className="h-px bg-border mx-2 my-1" />
-                  {projects.map((p) => {
+                  {projects.filter((p) => p.path !== noFolderPath).map((p) => {
                     const termCount = workspaceTerminals[p.path] || 0;
+                    const label = projectLabel(p);
                     return (
                       <button
                         key={p.key}
@@ -474,12 +521,14 @@ export function SessionSidebar({
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="truncate">{p.name}</span>
+                            <span className="truncate">{label}</span>
                             {termCount > 0 && (
                               <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-success" />
                             )}
                           </div>
-                          <span className="block text-clr-2xs text-text-muted font-mono truncate">{p.path}</span>
+                          <span className="block text-clr-2xs text-text-muted font-mono truncate">
+                            {p.displayPath?.startsWith("~/") ? p.displayPath : p.path}
+                          </span>
                         </div>
                         <span
                           onClick={(e) => toggleStar(e, p.path)}

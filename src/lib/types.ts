@@ -73,4 +73,8 @@ export interface ProjectInfo {
   name: string;
   path: string;
   key: string;
+  /** Cursor-style path label, e.g. ~/Projects/foo */
+  displayPath?: string;
+  /** Recency from Cursor workspace metadata (ms or rank score) */
+  lastUsedAt?: number;
 }

@@ -15,7 +15,12 @@ export function workspaceToProjectKey(workspace: string): string {
   return abs.replace(/^\//, "").replace(/\//g, "-");
 }
 
-function projectKeyToWorkspace(key: string): string | null {
+function projectKeyToWorkspace(key: string, knownPaths?: string[]): string | null {
+  if (knownPaths?.length) {
+    for (const path of knownPaths) {
+      if (workspaceToProjectKey(path) === key) return path;
+    }
+  }
   const parts = key.split("-");
   let path = sep + parts[0];
   for (let i = 1; i < parts.length; i++) {
@@ -30,7 +35,8 @@ function projectKeyToWorkspace(key: string): string | null {
   return path;
 }
 
-export async function listProjects(): Promise<ProjectInfo[]> {
+export async function listProjects(knownPaths?: string[]): Promise<ProjectInfo[]> {
+  const paths = knownPaths ?? (await import("@/lib/cursor-workspaces").then((m) => m.knownCursorWorkspacePaths()).catch(() => []));
   const projects: ProjectInfo[] = [];
   try {
     const entries = await readdir(CURSOR_PROJECTS_DIR);
@@ -42,7 +48,7 @@ export async function listProjects(): Promise<ProjectInfo[]> {
       } catch {
         continue;
       }
-      const workspace = projectKeyToWorkspace(entry);
+      const workspace = projectKeyToWorkspace(entry, paths);
       if (!workspace) continue;
       projects.push({ name: workspaceDisplayName(workspace), path: workspace, key: entry });
     }

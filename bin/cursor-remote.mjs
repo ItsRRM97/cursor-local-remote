@@ -261,7 +261,11 @@ if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
   console.error(`  Error: invalid port: ${rawPort}`);
   process.exit(1);
 }
-const workspace = positional[0] ? resolve(positional[0]) : ensureNoFolderDir();
+const workspace = positional[0]
+  ? resolve(positional[0])
+  : process.env.CURSOR_WORKSPACE
+    ? resolve(process.env.CURSOR_WORKSPACE)
+    : ensureNoFolderDir();
 
 if (!existsSync(workspace)) {
   console.error(`  Error: workspace path does not exist: ${workspace}`);

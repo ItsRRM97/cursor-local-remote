@@ -4,7 +4,16 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-CLR_ROOT="${CLR_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
+# When installed to ~/bin, repo path comes from CLR_REPO (set in launchd plist).
+if [[ -n "${CLR_REPO:-}" && -f "${CLR_REPO}/bin/cursor-remote.mjs" ]]; then
+  CLR_ROOT="${CLR_REPO}"
+elif [[ -f "${SCRIPT_DIR}/../Projects/cursor-local-remote/bin/cursor-remote.mjs" ]]; then
+  CLR_ROOT="$(cd "${SCRIPT_DIR}/../Projects/cursor-local-remote" && pwd)"
+elif [[ -f "${SCRIPT_DIR}/../../bin/cursor-remote.mjs" ]]; then
+  CLR_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+else
+  CLR_ROOT="${CLR_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
+fi
 PORT="${CLR_PORT:-3100}"
 CLR_NODE="${CLR_NODE:-${HOME}/Applications/CLR.app/Contents/MacOS/clr-server}"
 CLR_NODE_FALLBACK="${HOME}/.cursor-local-remote/bin/clr-server"
