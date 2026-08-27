@@ -71,6 +71,20 @@ function UnarchiveIcon({ size = 12, className = "" }: { size?: number; className
 
 const PROJECT_STORAGE_KEY = "clr-selected-project-v2";
 const STARRED_STORAGE_KEY = "clr-starred-projects"; // localStorage fallback key
+const EXPANDED_STORAGE_KEY = "clr-expanded-projects";
+
+function loadExpandedLocal(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(EXPANDED_STORAGE_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveExpanded(paths: string[]) {
+  localStorage.setItem(EXPANDED_STORAGE_KEY, JSON.stringify(paths));
+}
 
 function StarIcon({ size = 12, filled = false, className = "" }: { size?: number; filled?: boolean; className?: string }) {
   return (
@@ -145,6 +159,98 @@ function SessionTooltip({ session, children }: { session: StoredSession; childre
   );
 }
 
+interface SessionRowProps {
+  session: StoredSession;
+  currentSessionId: string | null;
+  showWorkspace?: boolean;
+  confirmingDelete: string | null;
+  showArchived: boolean;
+  status?: "streaming" | "idle";
+  onSelect: () => void;
+  onDeleteClick: (e: React.MouseEvent, sessionId: string) => void;
+  onArchiveClick: (e: React.MouseEvent, session: StoredSession) => void;
+  onCancelDelete: (e: React.MouseEvent) => void;
+}
+
+function SessionRow({
+  session,
+  currentSessionId,
+  showWorkspace,
+  confirmingDelete,
+  showArchived,
+  status,
+  onSelect,
+  onDeleteClick,
+  onArchiveClick,
+  onCancelDelete,
+}: SessionRowProps) {
+  return (
+    <SessionTooltip session={session}>
+      <div className="relative mb-px">
+        <button
+          onClick={onSelect}
+          aria-current={session.id === currentSessionId ? "true" : undefined}
+          className={`group w-full text-left pl-8 pr-3 py-2.5 rounded-md transition-colors min-h-[var(--clr-touch-min)] ${
+            session.id === currentSessionId
+              ? "bg-bg-active text-text"
+              : "hover:bg-bg-hover text-text-secondary"
+          }`}
+        >
+          <div className="flex items-start justify-between gap-2 pr-10 sm:pr-12">
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              {status && <StatusIndicator status={status} />}
+              <p className="text-clr-sm truncate">{formatSessionTitle(session)}</p>
+            </div>
+            <span className="text-clr-2xs text-text-muted shrink-0 tabular-nums whitespace-nowrap pt-0.5">
+              {timeAgo(session.updatedAt)}
+            </span>
+          </div>
+          {showWorkspace && (
+            <p className="text-clr-2xs text-text-muted mt-0.5 font-mono truncate">
+              {workspaceDisplayName(session.workspace)}
+            </p>
+          )}
+        </button>
+
+        {confirmingDelete === session.id ? (
+          <div className="absolute top-1 right-1 flex items-center gap-1">
+            <button
+              onClick={(e) => onDeleteClick(e, session.id)}
+              className="px-2 py-1 rounded text-clr-2xs font-medium bg-error/15 text-error hover:bg-error/25 transition-colors"
+            >
+              Delete
+            </button>
+            <button
+              onClick={onCancelDelete}
+              aria-label="Cancel delete"
+              className="icon-btn text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
+            >
+              <CloseIcon size={10} />
+            </button>
+          </div>
+        ) : (
+          <div className="absolute top-1 right-1 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+            <button
+              onClick={(e) => onArchiveClick(e, session)}
+              aria-label={showArchived ? "Unarchive session" : "Archive session"}
+              className="p-1.5 rounded hover:bg-bg-surface text-text-muted hover:text-text-secondary transition-colors"
+            >
+              {showArchived ? <UnarchiveIcon /> : <ArchiveIcon />}
+            </button>
+            <button
+              onClick={(e) => onDeleteClick(e, session.id)}
+              aria-label="Delete session"
+              className="p-1.5 rounded hover:bg-bg-surface text-text-muted hover:text-error transition-colors"
+            >
+              <TrashIcon />
+            </button>
+          </div>
+        )}
+      </div>
+    </SessionTooltip>
+  );
+}
+
 export function SessionSidebar({
   open,
   onClose,
@@ -166,13 +272,18 @@ export function SessionSidebar({
   const [projectDropdownOpen, setProjectDropdownOpen] = useState(false);
   const [starred, setStarred] = useState<string[]>([]);
   const [noFolderPath, setNoFolderPath] = useState<string | null>(null);
+  const [expandedPaths, setExpandedPaths] = useState<string[]>([]);
+  const [sessionsByPath, setSessionsByPath] = useState<Record<string, StoredSession[]>>({});
+  const [loadingPaths, setLoadingPaths] = useState<Record<string, boolean>>({});
   const haptics = useHaptics();
 
   useEffect(() => {
     const stored = localStorage.getItem(PROJECT_STORAGE_KEY);
     const localStars = loadStarredLocal();
+    const localExpanded = loadExpandedLocal();
     setSelectedProject(stored); // eslint-disable-line react-hooks/set-state-in-effect
     setStarred(localStars); // eslint-disable-line react-hooks/set-state-in-effect
+    setExpandedPaths(localExpanded); // eslint-disable-line react-hooks/set-state-in-effect
 
     apiFetch("/api/settings")
       .then((r) => r.json())
@@ -207,6 +318,29 @@ export function SessionSidebar({
     return p.name;
   }, []);
 
+  const fetchWorkspaceSessions = useCallback(async (workspace: string) => {
+    setLoadingPaths((prev) => ({ ...prev, [workspace]: true }));
+    try {
+      const params = new URLSearchParams({ workspace });
+      if (showArchived) params.set("archived", "true");
+      const r = await apiFetch("/api/sessions?" + params.toString());
+      const data = await r.json();
+      setSessionsByPath((prev) => ({ ...prev, [workspace]: data.sessions || [] }));
+    } catch {
+      setSessionsByPath((prev) => ({ ...prev, [workspace]: prev[workspace] || [] }));
+    } finally {
+      setLoadingPaths((prev) => ({ ...prev, [workspace]: false }));
+    }
+  }, [showArchived]);
+
+  const toggleExpanded = useCallback((path: string) => {
+    setExpandedPaths((prev) => {
+      const next = prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path];
+      saveExpanded(next);
+      return next;
+    });
+  }, []);
+
   const fetchProjects = useCallback(() => {
     apiFetch("/api/projects")
       .then((r) => r.json())
@@ -219,6 +353,12 @@ export function SessionSidebar({
         if (preferred) {
           setSelectedProject(preferred);
           onWorkspaceChange?.(preferred);
+          setExpandedPaths((prev) => {
+            if (prev.includes(preferred)) return prev;
+            const next = [...prev, preferred];
+            saveExpanded(next);
+            return next;
+          });
         }
       })
       .catch(() => {});
@@ -238,7 +378,13 @@ export function SessionSidebar({
     const qs = params.toString();
     return apiFetch("/api/sessions" + (qs ? "?" + qs : ""))
       .then((r) => r.json())
-      .then((data) => setSessions(data.sessions || []))
+      .then((data) => {
+        const list: StoredSession[] = data.sessions || [];
+        setSessions(list);
+        if (selectedProject && selectedProject !== "__all__") {
+          setSessionsByPath((prev) => ({ ...prev, [selectedProject]: list }));
+        }
+      })
       .catch(() => setFetchError("Failed to load sessions"));
   }, [selectedProject, showArchived]);
 
@@ -256,14 +402,35 @@ export function SessionSidebar({
     };
   }, [open, fetchSessions, fetchProjects]);
 
+  useEffect(() => {
+    if (!open) return;
+    for (const path of expandedPaths) {
+      void fetchWorkspaceSessions(path);
+    }
+  }, [open, expandedPaths, fetchWorkspaceSessions]);
+
   const handleProjectSelect = useCallback((path: string) => {
     setSelectedProject(path);
     localStorage.setItem(PROJECT_STORAGE_KEY, path);
     setProjectDropdownOpen(false);
     if (path !== "__all__") {
       onWorkspaceChange?.(path);
+      setExpandedPaths((prev) => {
+        if (prev.includes(path)) return prev;
+        const next = [...prev, path];
+        saveExpanded(next);
+        return next;
+      });
     }
   }, [onWorkspaceChange]);
+
+  const handleProjectRowClick = useCallback((path: string) => {
+    haptics.tap();
+    setSelectedProject(path);
+    localStorage.setItem(PROJECT_STORAGE_KEY, path);
+    onWorkspaceChange?.(path);
+    toggleExpanded(path);
+  }, [haptics, onWorkspaceChange, toggleExpanded]);
 
   const handleDeleteClick = (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
@@ -274,7 +441,10 @@ export function SessionSidebar({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId }),
       })
-        .then(() => fetchSessions())
+        .then(() => {
+          void fetchSessions();
+          for (const path of expandedPaths) void fetchWorkspaceSessions(path);
+        })
         .catch(() => setFetchError("Failed to delete session"))
         .finally(() => setConfirmingDelete(null));
     } else {
@@ -291,7 +461,10 @@ export function SessionSidebar({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: showArchived ? "unarchive" : "archive", sessionId: session.id, workspace: session.workspace }),
     })
-      .then(() => fetchSessions())
+      .then(() => {
+        void fetchSessions();
+        for (const path of expandedPaths) void fetchWorkspaceSessions(path);
+      })
       .catch(() => setFetchError("Failed to update session"));
   };
 
@@ -303,13 +476,112 @@ export function SessionSidebar({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "archive_all", workspace }),
     })
-      .then(() => fetchSessions())
+      .then(() => {
+        void fetchSessions();
+        for (const path of expandedPaths) void fetchWorkspaceSessions(path);
+      })
       .catch(() => setFetchError("Failed to archive sessions"));
   };
 
   const handleCancelDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     setConfirmingDelete(null);
+  };
+
+  const renderSessionList = (list: StoredSession[], showWorkspace = false) =>
+    list.map((s) => (
+      <SessionRow
+        key={s.id}
+        session={s}
+        currentSessionId={currentSessionId}
+        showWorkspace={showWorkspace}
+        confirmingDelete={confirmingDelete}
+        showArchived={showArchived}
+        status={activeStatuses[s.id]}
+        onSelect={() => {
+          haptics.select();
+          onSelectSession(s.id, s.workspace);
+          onClose();
+        }}
+        onDeleteClick={handleDeleteClick}
+        onArchiveClick={handleArchiveClick}
+        onCancelDelete={handleCancelDelete}
+      />
+    ));
+
+  const renderExpandableProject = (path: string, name: string, opts?: { starred?: boolean }) => {
+    const isActive = selectedProject === path;
+    const isExpanded = expandedPaths.includes(path);
+    const termCount = workspaceTerminals[path] || 0;
+    const projectSessions = sessionsByPath[path];
+    const isLoadingProject = loadingPaths[path];
+
+    return (
+      <div key={path} className="mb-0.5">
+        <div
+          className={`w-full flex items-center gap-1 rounded-md min-h-[var(--clr-touch-min)] transition-colors ${
+            isActive
+              ? "project-picker-active bg-bg-active text-text"
+              : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
+          }`}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              haptics.tap();
+              toggleExpanded(path);
+            }}
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? "Collapse chats" : "Expand chats"}
+            className="shrink-0 icon-btn text-text-muted hover:text-text-secondary"
+          >
+            <ChevronDown
+              size={14}
+              className={`transition-transform ${isExpanded ? "" : "-rotate-90"}`}
+            />
+          </button>
+          <button
+            onClick={() => handleProjectRowClick(path)}
+            aria-current={isActive ? "true" : undefined}
+            className="flex-1 flex items-center gap-1.5 min-w-0 py-2.5 pr-2 text-clr-sm text-left"
+          >
+            {opts?.starred ? (
+              <StarIcon size={10} filled className="shrink-0 text-text-secondary" />
+            ) : null}
+            <span className="truncate flex-1">{name}</span>
+            {termCount > 0 && (
+              <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-success" />
+            )}
+          </button>
+        </div>
+        {isExpanded && (
+          <div className="ml-1 border-l border-border/60 pl-1 mb-1">
+            {isLoadingProject && !projectSessions ? (
+              <div className="flex items-center gap-2 px-3 py-2 text-text-muted text-clr-xs">
+                <Spinner /> Loading chats
+              </div>
+            ) : !projectSessions || projectSessions.length === 0 ? (
+              <p className="px-3 py-2 text-clr-xs text-text-muted">
+                {showArchived ? "No archived chats" : "No chats yet"}
+              </p>
+            ) : (
+              renderSessionList(projectSessions)
+            )}
+            <button
+              onClick={() => {
+                haptics.tap();
+                onNewSession(path);
+                onClose();
+              }}
+              className="w-full flex items-center gap-1.5 pl-8 pr-3 py-2 rounded-md text-clr-xs text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors min-h-[var(--clr-touch-min)]"
+            >
+              <PlusIcon size={12} />
+              New chat here
+            </button>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const currentProjectName = selectedProject === "__all__"
@@ -321,6 +593,13 @@ export function SessionSidebar({
         return selectedProject ? workspaceDisplayName(selectedProject) : null;
       })()
       || "Current project";
+
+  const starredSet = new Set(starred);
+  const recentUnstarred = recentProjects.filter((p) => !starredSet.has(p.path));
+  const selectedInLists =
+    !!selectedProject &&
+    selectedProject !== "__all__" &&
+    (starredSet.has(selectedProject) || recentProjects.some((p) => p.path === selectedProject));
 
   return (
     <>
@@ -340,7 +619,10 @@ export function SessionSidebar({
               onClick={() => {
                 haptics.tap();
                 setLoading(true);
-                fetchSessions().finally(() => setLoading(false));
+                Promise.all([
+                  fetchSessions(),
+                  ...expandedPaths.map((path) => fetchWorkspaceSessions(path)),
+                ]).finally(() => setLoading(false));
               }}
               disabled={loading}
               aria-label="Refresh sessions"
@@ -510,8 +792,14 @@ export function SessionSidebar({
         </div>
 
         <div className="overflow-y-auto flex-1 px-2 pb-2 overscroll-contain">
+          {fetchError && (
+            <div className="mx-1 mb-2 px-2.5 py-2 rounded-md bg-error/10 text-error text-clr-xs">
+              {fetchError}
+            </div>
+          )}
+
           {starred.length > 0 && (
-            <div className="space-y-px mb-2">
+            <div className="mb-2">
               <p className="text-clr-2xs text-text-muted uppercase tracking-wider px-3 pt-1 pb-0.5">
                 Starred
               </p>
@@ -519,162 +807,52 @@ export function SessionSidebar({
                 const proj = projects.find((p) => p.path === path)
                   || recentProjects.find((p) => p.path === path);
                 const name = proj ? projectLabel(proj) : workspaceDisplayName(path);
-                const isActive = selectedProject === path;
-                const termCount = workspaceTerminals[path] || 0;
-                return (
-                  <button
-                    key={path}
-                    onClick={() => handleProjectSelect(path)}
-                    aria-current={isActive ? "true" : undefined}
-                    className={`w-full flex items-center gap-1.5 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] text-clr-sm transition-colors ${
-                      isActive
-                        ? "project-picker-active bg-bg-active text-text"
-                        : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
-                    }`}
-                  >
-                    {isActive ? (
-                      <CheckIcon size={12} className="shrink-0 text-accent" />
-                    ) : (
-                      <StarIcon size={10} filled className="shrink-0 text-text-secondary" />
-                    )}
-                    <span className="truncate flex-1 text-left">{name}</span>
-                    {termCount > 0 && (
-                      <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-success" />
-                    )}
-                  </button>
-                );
+                return renderExpandableProject(path, name, { starred: true });
               })}
             </div>
           )}
 
-          {recentProjects.length > 0 && (
-            <div className="space-y-px mb-2">
+          {recentUnstarred.length > 0 && (
+            <div className="mb-2">
               <p className="text-clr-2xs text-text-muted uppercase tracking-wider px-3 pt-1 pb-0.5">
                 Recent
               </p>
-              {recentProjects.map((p) => {
-                const isActive = selectedProject === p.path;
-                const termCount = workspaceTerminals[p.path] || 0;
-                return (
-                  <button
-                    key={p.path}
-                    onClick={() => handleProjectSelect(p.path)}
-                    aria-current={isActive ? "true" : undefined}
-                    className={`w-full flex items-center gap-1.5 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] text-clr-sm transition-colors ${
-                      isActive
-                        ? "project-picker-active bg-bg-active text-text"
-                        : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
-                    }`}
-                  >
-                    {isActive ? (
-                      <CheckIcon size={12} className="shrink-0 text-accent" />
-                    ) : (
-                      <span className="shrink-0 w-3" />
-                    )}
-                    <span className="truncate flex-1 text-left">{projectLabel(p)}</span>
-                    {termCount > 0 && (
-                      <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-success" />
-                    )}
-                  </button>
-                );
-              })}
+              {recentUnstarred.map((p) => renderExpandableProject(p.path, projectLabel(p)))}
             </div>
           )}
 
-          {(starred.length > 0 || recentProjects.length > 0) && (
-            <div className="h-px bg-border mx-2 mb-2" />
+          {selectedProject &&
+            selectedProject !== "__all__" &&
+            !selectedInLists &&
+            renderExpandableProject(
+              selectedProject,
+              workspaceDisplayName(selectedProject),
+            )}
+
+          {selectedProject === "__all__" && (
+            <>
+              <div className="h-px bg-border mx-2 my-2" />
+              <p className="text-clr-2xs text-text-muted uppercase tracking-wider px-3 pt-0.5 pb-1">
+                All sessions
+              </p>
+              {loading ? (
+                <div className="flex items-center gap-2 justify-center py-8 text-text-muted text-clr-sm">
+                  <Spinner />
+                </div>
+              ) : sessions.length === 0 && !fetchError ? (
+                <p className="text-text-muted text-clr-sm text-center py-8">
+                  {showArchived ? "No archived sessions" : "No sessions"}
+                </p>
+              ) : (
+                renderSessionList(sessions, true)
+              )}
+            </>
           )}
 
-          <p className="text-clr-2xs text-text-muted uppercase tracking-wider px-3 pt-0.5 pb-1">
-            Sessions
-          </p>
-
-          {fetchError && (
-            <div className="mx-1 mb-2 px-2.5 py-2 rounded-md bg-error/10 text-error text-clr-xs">
-              {fetchError}
-            </div>
-          )}
-          {loading ? (
-            <div className="flex items-center gap-2 justify-center py-8 text-text-muted text-clr-sm">
-              <Spinner />
-            </div>
-          ) : sessions.length === 0 && !fetchError ? (
+          {!selectedProject && starred.length === 0 && recentUnstarred.length === 0 && (
             <p className="text-text-muted text-clr-sm text-center py-8">
-              {showArchived ? "No archived sessions" : "No sessions"}
+              Pick a project to see chats
             </p>
-          ) : (
-            sessions.map((s) => {
-              const status = activeStatuses[s.id];
-              return (
-                <SessionTooltip key={s.id} session={s}>
-                  <div className="relative mb-px">
-                    <button
-                      onClick={() => {
-                        haptics.select();
-                        onSelectSession(s.id, s.workspace);
-                        onClose();
-                      }}
-                      aria-current={s.id === currentSessionId ? "true" : undefined}
-                      className={`group w-full text-left px-3 py-3 rounded-md transition-colors min-h-[var(--clr-touch-min)] ${
-                        s.id === currentSessionId
-                          ? "bg-bg-active text-text"
-                          : "hover:bg-bg-hover text-text-secondary"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2 pr-10 sm:pr-12">
-                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                          {status && <StatusIndicator status={status} />}
-                          <p className="text-clr-sm truncate">{formatSessionTitle(s)}</p>
-                        </div>
-                        <span className="text-clr-2xs text-text-muted shrink-0 tabular-nums whitespace-nowrap pt-0.5">
-                          {timeAgo(s.updatedAt)}
-                        </span>
-                      </div>
-                      {selectedProject === "__all__" && (
-                        <p className="text-clr-2xs text-text-muted mt-0.5 font-mono truncate">
-                          {workspaceDisplayName(s.workspace)}
-                        </p>
-                      )}
-                    </button>
-
-                    {confirmingDelete === s.id ? (
-                      <div className="absolute top-1 right-1 flex items-center gap-1">
-                        <button
-                          onClick={(e) => handleDeleteClick(e, s.id)}
-                          className="px-2 py-1 rounded text-clr-2xs font-medium bg-error/15 text-error hover:bg-error/25 transition-colors"
-                        >
-                          Delete
-                        </button>
-                        <button
-                          onClick={handleCancelDelete}
-                          aria-label="Cancel delete"
-                          className="icon-btn text-text-muted hover:text-text-secondary hover:bg-bg-hover transition-colors"
-                        >
-                          <CloseIcon size={10} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="absolute top-1 right-1 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
-                        <button
-                          onClick={(e) => handleArchiveClick(e, s)}
-                          aria-label={showArchived ? "Unarchive session" : "Archive session"}
-                          className="p-1.5 rounded hover:bg-bg-surface text-text-muted hover:text-text-secondary transition-colors"
-                        >
-                          {showArchived ? <UnarchiveIcon /> : <ArchiveIcon />}
-                        </button>
-                        <button
-                          onClick={(e) => handleDeleteClick(e, s.id)}
-                          aria-label="Delete session"
-                          className="p-1.5 rounded hover:bg-bg-surface text-text-muted hover:text-error transition-colors"
-                        >
-                          <TrashIcon />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </SessionTooltip>
-              );
-            })
           )}
         </div>
       </div>
