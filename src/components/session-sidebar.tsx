@@ -386,77 +386,6 @@ export function SessionSidebar({
             </div>
           </div>
 
-          {recentProjects.length > 0 && (
-            <div className="space-y-px">
-              <p className="text-clr-2xs text-text-muted uppercase tracking-wider px-3 pt-1 pb-0.5">
-                Recent
-              </p>
-              {recentProjects.map((p) => {
-                const isActive = selectedProject === p.path;
-                const termCount = workspaceTerminals[p.path] || 0;
-                return (
-                  <button
-                    key={p.path}
-                    onClick={() => handleProjectSelect(p.path)}
-                    aria-current={isActive ? "true" : undefined}
-                    className={`w-full flex items-center gap-1.5 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] text-clr-sm transition-colors ${
-                      isActive
-                        ? "project-picker-active bg-bg-active text-text"
-                        : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
-                    }`}
-                  >
-                    {isActive ? (
-                      <CheckIcon size={12} className="shrink-0 text-accent" />
-                    ) : (
-                      <span className="shrink-0 w-3" />
-                    )}
-                    <span className="truncate flex-1 text-left">{projectLabel(p)}</span>
-                    {termCount > 0 && (
-                      <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-success" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {starred.length > 0 && (
-            <div className="space-y-px">
-              <p className="text-clr-2xs text-text-muted uppercase tracking-wider px-3 pt-1 pb-0.5">
-                Starred
-              </p>
-              {starred.map((path) => {
-                const proj = projects.find((p) => p.path === path)
-                  || recentProjects.find((p) => p.path === path);
-                const name = proj ? projectLabel(proj) : workspaceDisplayName(path);
-                const isActive = selectedProject === path;
-                const termCount = workspaceTerminals[path] || 0;
-                return (
-                  <button
-                    key={path}
-                    onClick={() => handleProjectSelect(path)}
-                    aria-current={isActive ? "true" : undefined}
-                    className={`w-full flex items-center gap-1.5 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] text-clr-sm transition-colors ${
-                      isActive
-                        ? "project-picker-active bg-bg-active text-text"
-                        : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
-                    }`}
-                  >
-                    {isActive ? (
-                      <CheckIcon size={12} className="shrink-0 text-accent" />
-                    ) : (
-                      <StarIcon size={10} filled className="shrink-0 text-text-secondary" />
-                    )}
-                    <span className="truncate flex-1 text-left">{name}</span>
-                    {termCount > 0 && (
-                      <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-success" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
           <div className="relative">
             <button
               onClick={() => {
@@ -473,7 +402,11 @@ export function SessionSidebar({
             {projectDropdownOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setProjectDropdownOpen(false)} />
-                <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-bg-elevated border border-border rounded-lg shadow-xl py-1 max-h-60 overflow-y-auto">
+                <div
+                  role="listbox"
+                  aria-label="Projects"
+                  className="absolute left-0 right-0 top-full mt-1 z-50 bg-bg-elevated border border-border rounded-lg shadow-xl py-1 max-h-[min(60vh,22rem)] overflow-y-auto overscroll-contain"
+                >
                   {noFolderPath && (
                     <button
                       onClick={() => handleProjectSelect(noFolderPath)}
@@ -576,7 +509,86 @@ export function SessionSidebar({
           </div>
         </div>
 
-        <div className="overflow-y-auto flex-1 px-2 pb-2">
+        <div className="overflow-y-auto flex-1 px-2 pb-2 overscroll-contain">
+          {starred.length > 0 && (
+            <div className="space-y-px mb-2">
+              <p className="text-clr-2xs text-text-muted uppercase tracking-wider px-3 pt-1 pb-0.5">
+                Starred
+              </p>
+              {starred.map((path) => {
+                const proj = projects.find((p) => p.path === path)
+                  || recentProjects.find((p) => p.path === path);
+                const name = proj ? projectLabel(proj) : workspaceDisplayName(path);
+                const isActive = selectedProject === path;
+                const termCount = workspaceTerminals[path] || 0;
+                return (
+                  <button
+                    key={path}
+                    onClick={() => handleProjectSelect(path)}
+                    aria-current={isActive ? "true" : undefined}
+                    className={`w-full flex items-center gap-1.5 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] text-clr-sm transition-colors ${
+                      isActive
+                        ? "project-picker-active bg-bg-active text-text"
+                        : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
+                    }`}
+                  >
+                    {isActive ? (
+                      <CheckIcon size={12} className="shrink-0 text-accent" />
+                    ) : (
+                      <StarIcon size={10} filled className="shrink-0 text-text-secondary" />
+                    )}
+                    <span className="truncate flex-1 text-left">{name}</span>
+                    {termCount > 0 && (
+                      <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-success" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {recentProjects.length > 0 && (
+            <div className="space-y-px mb-2">
+              <p className="text-clr-2xs text-text-muted uppercase tracking-wider px-3 pt-1 pb-0.5">
+                Recent
+              </p>
+              {recentProjects.map((p) => {
+                const isActive = selectedProject === p.path;
+                const termCount = workspaceTerminals[p.path] || 0;
+                return (
+                  <button
+                    key={p.path}
+                    onClick={() => handleProjectSelect(p.path)}
+                    aria-current={isActive ? "true" : undefined}
+                    className={`w-full flex items-center gap-1.5 px-3 py-2.5 rounded-md min-h-[var(--clr-touch-min)] text-clr-sm transition-colors ${
+                      isActive
+                        ? "project-picker-active bg-bg-active text-text"
+                        : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
+                    }`}
+                  >
+                    {isActive ? (
+                      <CheckIcon size={12} className="shrink-0 text-accent" />
+                    ) : (
+                      <span className="shrink-0 w-3" />
+                    )}
+                    <span className="truncate flex-1 text-left">{projectLabel(p)}</span>
+                    {termCount > 0 && (
+                      <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-success" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {(starred.length > 0 || recentProjects.length > 0) && (
+            <div className="h-px bg-border mx-2 mb-2" />
+          )}
+
+          <p className="text-clr-2xs text-text-muted uppercase tracking-wider px-3 pt-0.5 pb-1">
+            Sessions
+          </p>
+
           {fetchError && (
             <div className="mx-1 mb-2 px-2.5 py-2 rounded-md bg-error/10 text-error text-clr-xs">
               {fetchError}
